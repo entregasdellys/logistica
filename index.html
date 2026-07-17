@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocorrências de Entrega</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1b8a3e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="logo.png">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Cabeçalho Principal -->
+        <header class="app-header">
+            <h1 id="app-title">Ocorrências de Entrega</h1>
+            <p id="app-subtitle">Selecione o tipo de ocorrência para iniciar</p>
+        </header>
+
+        <!-- Tela 1: Menu de Seleção Inicial -->
+        <main id="screen-menu" class="screen active">
+            <div class="menu-grid">
+                <button type="button" class="btn-main btn-retorno" onclick="abrirFormulario('retorno')">
+                    <span class="icon">🟢</span>
+                    <span class="label">RETORNO</span>
+                </button>
+                <button type="button" class="btn-main btn-reentrega" onclick="abrirFormulario('reentrega')">
+                    <span class="icon">🟡</span>
+                    <span class="label">REENTREGA</span>
+                </button>
+                <button type="button" class="btn-main btn-credito" onclick="abrirFormulario('credito')">
+                    <span class="icon">🔴</span>
+                    <span class="label">CRÉDITO</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Tela 2: Formulário de RETORNO -->
+        <section id="form-retorno" class="screen">
+            <button type="button" class="btn-back" onclick="voltarMenu()">⬅️ Voltar ao Menu</button>
+            <h2>🟢 Ocorrência: RETORNO</h2>
+            
+            <form id="form-data-retorno" onsubmit="event.preventDefault();">
+                <div class="form-group">
+                    <label for="retorno-nf">Número da NF *</label>
+                    <input type="text" id="retorno-nf" placeholder="Ex: 12345" inputmode="numeric" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="retorno-cliente">Código do Cliente *</label>
+                    <input type="text" id="retorno-cliente" placeholder="Ex: 123456" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="retorno-motivo">Motivo *</label>
+                    <select id="retorno-motivo" onchange="tratarMotivoOutro('retorno')" required>
+                        <option value="">Selecione o motivo...</option>
+                        <option value="Cliente fechado">Cliente fechado</option>
+                        <option value="Cliente recusou">Cliente recusou</option>
+                        <option value="Não fez pedido">Sem pedido</option>
+                        <option value="Fora de horário">Fora de horário</option>
+                        <option value="Endereço não localizado">Endereço não localizado</option>
+                        <option value="Cliente sem pagamento">Cliente sem pagamento</option>
+                        <option value="Mercadoria avariada">Mercadoria avariada</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+
+                <div class="form-group hidden" id="group-retorno-outro">
+                    <label for="retorno-outro">Especifique o Motivo *</label>
+                    <input type="text" id="retorno-outro" placeholder="Descreva o motivo detalhadamente">
+                </div>
+            </form>
+            
+            <!-- Ações do Formulário -->
+            <div class="action-buttons">
+                <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('retorno')">📲 Enviar pelo WhatsApp</button>
+                <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('retorno')">📋 Copiar Mensagem</button>
+                <button type="button" class="btn-action btn-clear" onclick="limparFormulario('retorno')">🗑 Limpar Campos</button>
+            </div>
+        </section>
+
+        <!-- Tela 3: Formulário de REENTREGA -->
+        <section id="form-reentrega" class="screen">
+            <button type="button" class="btn-back" onclick="voltarMenu()">⬅️ Voltar ao Menu</button>
+            <h2>🟡 Ocorrência: REENTREGA</h2>
+            
+            <form id="form-data-reentrega" onsubmit="event.preventDefault();">
+              
+                <div class="form-group">
+                    <label>Lista de Notas Fiscais *</label>
+                    <div id="container-nfs-reentrega" class="dynamic-list">
+                        <!-- Campos de NF injetados dinamicamente via JS -->
+                    </div>
+                    <button type="button" class="btn-add" onclick="adicionarNF()">+ Adicionar NF</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="reentrega-motivo">Motivo *</label>
+                    <select id="reentrega-motivo" onchange="tratarMotivoOutro('reentrega')" required>
+                        <option value="">Selecione o motivo...</option>
+                        <option value="Cliente fechado">Cliente fechado</option>
+                        <option value="Cliente recusou">Cliente recusou</option>
+                        <option value="Não fez pedido">Sem pedido</option>
+                        <option value="Fora de horário">Fora de horário</option>
+                        <option value="Endereço não localizado">Endereço não localizado</option>
+                        <option value="Cliente sem pagamento">Cliente sem pagamento</option>
+                        <option value="Mercadoria avariada">Mercadoria avariada</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+
+                <div class="form-group hidden" id="group-reentrega-outro">
+                    <label for="reentrega-outro">Especifique o Motivo *</label>
+                    <input type="text" id="reentrega-outro" placeholder="Descreva o motivo detalhadamente">
+                </div>
+            </form>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('reentrega')">📲 Enviar pelo WhatsApp</button>
+                <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('reentrega')">📋 Copiar Mensagem</button>
+                <button type="button" class="btn-action btn-clear" onclick="limparFormulario('reentrega')">🗑 Limpar Campos</button>
+            </div>
+        </section>
+
+        <!-- Tela 4: Formulário de CRÉDITO -->
+        <section id="form-credito" class="screen">
+            <button type="button" class="btn-back" onclick="voltarMenu()">⬅️ Voltar ao Menu</button>
+            <h2>🔴 Ocorrência: CRÉDITO</h2>
+            
+            <form id="form-data-credito" onsubmit="event.preventDefault();">
+                <div class="form-group">
+                    <label for="credito-nf">Número da NF *</label>
+                    <input type="text" id="credito-nf" placeholder="Ex: 98765" inputmode="numeric" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="credito-cliente">Código do Cliente *</label>
+                    <input type="text" id="credito-cliente" placeholder="Ex: 123456" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Itens com Avaria/Divergência *</label>
+                    <div id="container-itens-credito" class="dynamic-list">
+                        <!-- Itens dinâmicos injetados via JS -->
+                    </div>
+                    <button type="button" class="btn-add" onclick="adicionarItem()">+ Adicionar Item</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="credito-motivo">Motivo *</label>
+                    <select id="credito-motivo" onchange="tratarMotivoOutro('credito')" required>
+                        <option value="">Selecione o motivo...</option>
+                        <option value="Produto avariado">Produto avariado</option>
+                        <option value="Produto descongelado">Produto descongelado</option>
+                        <option value="Produto vencido">Produto vencido</option>
+                        <option value="Cliente recusou">Cliente recusou</option>
+                        <option value="Pedido incorreto">Pedido incorreto</option>
+                        <option value="Falta de mercadoria">Falta de mercadoria</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+
+                <div class="form-group hidden" id="group-credito-outro">
+                    <label for="credito-outro">Especifique o Motivo *</label>
+                    <input type="text" id="credito-outro" placeholder="Descreva o motivo detalhadamente">
+                </div>
+
+                <div class="form-group">
+                    <label for="credito-obs">Observação (Opcional)</label>
+                    <textarea id="credito-obs" rows="3" placeholder="Informações adicionais relevantes..."></textarea>
+                </div>
+            </form>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('credito')">📲 Enviar pelo WhatsApp</button>
+                <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('credito')">📋 Copiar Mensagem</button>
+                <button type="button" class="btn-action btn-clear" onclick="limparFormulario('credito')">🗑 Limpar Campos</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Feedback Flutuante (Toast) -->
+    <div id="toast" class="toast hidden">Mensagem Copiada!</div>
+
+    <script src="script.js"></script>
+</body>
+</html>

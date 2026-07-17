@@ -1,0 +1,21 @@
+{
+  "short_name": "Ocorrências",
+  "name": "Ocorrências de Entrega",
+  "icons": [
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#f4f6f8",
+  "theme_color": "#1b8a3e",
+  "display": "standalone",
+  "orientation": "portrait"
+}
