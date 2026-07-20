@@ -157,7 +157,7 @@ function removerItem(id) {
    ========================================================================== */
 
 /**
- * Consolida os dados e constrói a mensagem formatada para WhatsApp.
+ * Consolida os dados e constrói a mensagem formatada para WhatsApp sem linhas vazias.
  * @param {string} tipo - 'retorno', 'reentrega' ou 'credito'
  * @returns {string|null} Texto formatado ou null em caso de falha na validação.
  */
@@ -170,19 +170,19 @@ function gerarMensagem(tipo) {
 
         if (!nf) { exibirToast("Informe a NF."); return null; }
         if (!cliente) { exibirToast("Informe o cliente."); return null; }
+        if (!/^\d+$/.test(cliente)) { exibirToast("O campo cliente deve conter apenas números."); return null; }
         if (!motivoSelect) { exibirToast("Informe o motivo."); return null; }
         if (motivoSelect === 'Outro' && !motivoOutro) { exibirToast("Especifique o motivo."); return null; }
 
         const motivoFinal = motivoSelect === 'Outro' ? motivoOutro : motivoSelect;
 
-        return `📦 *RETORNO*\n\n` +
+        return `📦 *RETORNO*\n` +
                `*NF:* ${nf}\n` +
                `*CLIENTE:* ${cliente}\n` +
                `*MOTIVO:* ${motivoFinal}`;
     }
 
-  if (tipo === 'reentrega') {
-        // Removida a busca pelo campo 'reentrega-cliente'
+    if (tipo === 'reentrega') {
         const motivoSelect = document.getElementById('reentrega-motivo').value;
         const motivoOutro = document.getElementById('reentrega-outro').value.trim();
 
@@ -196,12 +196,9 @@ function gerarMensagem(tipo) {
         const motivoFinal = motivoSelect === 'Outro' ? motivoOutro : motivoSelect;
         const listaNfsTexto = nfs.join('\n');
 
-        // Mensagem sem a linha do cliente
-        let msg = `🚚 *REENTREGA*\n\n`;
-        msg += `*NF(s):*\n${listaNfsTexto}\n\n`;
-        msg += `*MOTIVO:* ${motivoFinal}`;
-
-        return msg;
+        return `🚚 *REENTREGA*\n` +
+               `*NF(s):*\n${listaNfsTexto}\n` +
+               `*MOTIVO:* ${motivoFinal}`;
     }
 
     if (tipo === 'credito') {
@@ -213,6 +210,7 @@ function gerarMensagem(tipo) {
 
         if (!nf) { exibirToast("Informe a NF."); return null; }
         if (!cliente) { exibirToast("Informe o cliente."); return null; }
+        if (!/^\d+$/.test(cliente)) { exibirToast("O campo cliente deve conter apenas números."); return null; }
 
         // Coleta dos Itens
         const itemRows = document.querySelectorAll('#container-itens-credito .dynamic-item');
@@ -244,16 +242,16 @@ function gerarMensagem(tipo) {
         let itensTexto = itensColetados.map(i => {
             const codTexto = i.cod ? `[${i.cod}] ` : '';
             return `• *Produto:* ${codTexto}${i.desc}\n  *Quantidade:* ${i.qtd}`;
-        }).join('\n\n');
+        }).join('\n');
 
-        let msg = `💳 *CRÉDITO*\n\n` +
+        let msg = `💳 *CRÉDITO*\n` +
                `*NF:* ${nf}\n` +
-               `*CLIENTE:* ${cliente}\n\n` +
-               `*ITENS:*\n${itensTexto}\n\n` +
+               `*CLIENTE:* ${cliente}\n` +
+               `*ITENS:*\n${itensTexto}\n` +
                `*MOTIVO:* ${motivoFinal}`;
 
         if (obs) {
-            msg += `\n\n*OBS:* ${obs}`;
+            msg += `\n*OBS:* ${obs}`;
         }
 
         return msg;
