@@ -203,3 +203,92 @@ body { background-color: #f3f4f6; color: #1f2937; line-height: 1.5; min-height: 
     font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
 }
 .toast.show { opacity: 1; }
+
+/* =======================================================
+   SUPORTE A ORIENTAÇÃO DA TELA NO CELULAR (PORTRAIT / LANDSCAPE)
+   ======================================================= */
+
+/* 📱 MODIFICAÇÕES GERAIS PARA DISPOSITIVOS MÓVEIS */
+@media screen and (max-width: 768px) {
+    .container {
+        width: 100%;
+        padding: 0 10px;
+        margin-bottom: 15px;
+    }
+
+    .form-section {
+        padding: 15px;
+    }
+
+    /* Melhora a área do clique dos inputs no celular */
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+        font-size: 16px; /* Evita que o iOS faça zoom automático ao focar no campo */
+    }
+}
+
+/* 📱 CELULAR NA VERTICAL (Portrait) */
+@media screen and (orientation: portrait) and (max-width: 768px) {
+    .main-header {
+        margin: 15px 0 10px 0;
+    }
+
+    .type-selector {
+        flex-direction: row;
+    }
+
+    .action-buttons {
+        gap: 8px;
+    }
+
+    .user-bar {
+        padding: 10px 12px;
+    }
+}
+
+/* 📱 CELULAR NA HORIZONTAL (Landscape) */
+@media screen and (orientation: landscape) and (max-height: 600px) {
+    #screen-login.active {
+        padding: 10px;
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
+    .login-card {
+        padding: 15px;
+        margin: 10px auto;
+    }
+
+    .login-header {
+        margin-bottom: 12px;
+    }
+
+    .login-header h2 {
+        font-size: 22px;
+    }
+
+    .main-header {
+        margin: 10px 0 5px 0;
+    }
+
+    .main-header h2 {
+        font-size: 18px;
+    }
+
+    .user-bar {
+        padding: 6px 12px;
+    }
+
+    /* Empacota botões em linha quando a tela for baixa na horizontal */
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        flex: 1;
+        min-width: 140px;
+        padding: 10px;
+    }
+}
