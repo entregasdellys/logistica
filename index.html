@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ocorrências Logística</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+    <!-- 1. TELA DE IDENTIFICAÇÃO DO MOTORISTA (LOGIN DIÁRIO) -->
+    <div id="screen-login" class="screen active">
+        <div class="login-card">
+            <div class="login-header">
+                <h2>DELLY'S</h2>
+                <p>Identificação do Motorista</p>
+            </div>
+            <form id="form-login" onsubmit="salvarIdentificacao(event)">
+                <div class="form-group">
+                    <label for="motorista-nome">Nome do Motorista *</label>
+                    <input type="text" id="motorista-nome" placeholder="Ex: Volnei" required>
+                </div>
+                <div class="form-group">
+                    <label for="motorista-placa">Placa do Veículo *</label>
+                    <input type="text" id="motorista-placa" placeholder="Ex: ABC1D23" style="text-transform: uppercase;" required>
+                </div>
+                <div class="form-group">
+                    <label for="motorista-ajudante">Ajudante(s)</label>
+                    <input type="text" id="motorista-ajudante" placeholder="Ex: Douglas e Samuel (Opcional)">
+                </div>
+                <button type="submit" class="btn-primary">Acessar Sistema ➔</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. TELA PRINCIPAL (OCORRÊNCIAS) -->
+    <div id="screen-main" class="screen">
+        <!-- BARRA SUPERIOR DE PERFIL -->
+        <header class="user-bar">
+            <div class="user-info">
+                <span class="user-badge">🚛 Motorista: <strong id="bar-motorista">-</strong></span>
+                <span class="user-badge">🏷 Placa: <strong id="bar-placa">-</strong></span>
+            </div>
+            <button type="button" class="btn-edit-user" onclick="alterarIdentificacao()">✏️ Alterar</button>
+        </header>
+
+        <div class="main-header">
+            <h2>Ocorrências de Entrega</h2>
+            <p>Selecione o tipo de ocorrência para iniciar</p>
+        </div>
+
+        <!-- SELETOR DE ACIONAMENTOS -->
+        <div class="container">
+            <div class="type-selector">
+                <button type="button" class="tab-btn active" onclick="trocarAba(event, 'retorno')">📦 Retorno</button>
+                <button type="button" class="tab-btn" onclick="trocarAba(event, 'reentrega')">🚚 Reentrega</button>
+                <button type="button" class="tab-btn" onclick="trocarAba(event, 'credito')">💳 Crédito</button>
+            </div>
+
+            <!-- FORMULÁRIO DE RETORNO -->
+            <form id="form-retorno" class="form-section active">
+                <h3>📦 Registro de Retorno</h3>
+                <div class="form-group">
+                    <label for="retorno-nf">Número da NF *</label>
+                    <input type="text" id="retorno-nf" placeholder="Ex: 123456" inputmode="numeric" required>
+                </div>
+                <div class="form-group">
+                    <label for="retorno-cliente">Código do Cliente *</label>
+                    <input type="text" id="retorno-cliente" placeholder="Ex: 12245" inputmode="numeric" required>
+                </div>
+                <div class="form-group">
+                    <label for="retorno-motivo">Motivo *</label>
+                    <select id="retorno-motivo" onchange="verificarOutroMotivo('retorno')" required>
+                        <option value="">Selecione o motivo...</option>
+                        <option value="Cliente fechado">Cliente fechado</option>
+                        <option value="Recusa de mercadoria">Recusa de mercadoria</option>
+                        <option value="Endereço não localizado">Endereço não localizado</option>
+                        <option value="Falta de tempo hábil">Falta de tempo hábil</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-group hidden" id="group-retorno-outro">
+                    <label for="retorno-outro">Especifique o Motivo *</label>
+                    <input type="text" id="retorno-outro" placeholder="Descreva o motivo">
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('retorno')">📲 Enviar pelo WhatsApp</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('retorno')">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-clear" onclick="limparFormulario('retorno')">🗑 Limpar Campos</button>
+                </div>
+            </form>
+
+            <!-- FORMULÁRIO DE REENTREGA -->
+            <form id="form-reentrega" class="form-section">
+                <h3>🚚 Registro de Reentrega</h3>
+                <div id="container-nfs-reentrega">
+                    <div class="form-group">
+                        <label>Número da NF *</label>
+                        <input type="text" class="input-nf-reentrega" placeholder="Ex: 123456" inputmode="numeric" required>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" onclick="adicionarCampoNfReentrega()">+ Adicionar outra NF</button>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="reentrega-motivo">Motivo *</label>
+                    <select id="reentrega-motivo" onchange="verificarOutroMotivo('reentrega')" required>
+                        <option value="">Selecione o motivo...</option>
+                        <option value="Solicitação do cliente">Solicitação do cliente</option>
+                        <option value="Horário estourado">Horário estourado</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-group hidden" id="group-reentrega-outro">
+                    <label for="reentrega-outro">Especifique o Motivo *</label>
+                    <input type="text" id="reentrega-outro" placeholder="Descreva o motivo">
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('reentrega')">📲 Enviar pelo WhatsApp</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('reentrega')">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-clear" onclick="limparFormulario('reentrega')">🗑 Limpar Campos</button>
+                </div>
+            </form>
+
+            <!-- FORMULÁRIO DE CRÉDITO -->
+            <form id="form-credito" class="form-section">
+                <h3>💳 Registro de Crédito</h3>
+                <div class="form-group">
+                    <label for="credito-nf">Número da NF *</label>
+                    <input type="text" id="credito-nf" placeholder="Ex: 123456" inputmode="numeric" required>
+                </div>
+                <div class="form-group">
+                    <label for="credito-cliente">Código do Cliente *</label>
+                    <input type="text" id="credito-cliente" placeholder="Ex: 12245" inputmode="numeric" required>
+                </div>
+
+                <div class="section-title">Produtos / Itens</div>
+                <div id="container-itens-credito">
+                    <div class="dynamic-item">
+                        <input type="text" class="item-codigo" placeholder="Cód" style="width: 25%;">
+                        <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="width: 50%;" required>
+                        <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 20%;" required>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" onclick="adicionarItemCredito()">+ Adicionar Item</button>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="credito-motivo">Motivo *</label>
+                    <select id="credito-motivo" onchange="verificarOutroMotivo('credito')" required>
+                        <option value="">Selecione o motivo...</option>
+                        <option value="Avaria em transporte">Avaria em transporte</option>
+                        <option value="Falta de produto">Falta de produto</option>
+                        <option value="Produto trocado">Produto trocado</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-group hidden" id="group-credito-outro">
+                    <label for="credito-outro">Especifique o Motivo *</label>
+                    <input type="text" id="credito-outro" placeholder="Descreva o motivo">
+                </div>
+                <div class="form-group">
+                    <label for="credito-obs">Observações</label>
+                    <textarea id="credito-obs" rows="2" placeholder="Observações adicionais (opcional)"></textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('credito')">📲 Enviar pelo WhatsApp</button>
+                    <button type="button" class="btn-action btn-secondary" onclick="gerarImagemTalao()" style="background-color: #0284c7;">📄 Gerar Bloco de Débito</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('credito')">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-clear" onclick="limparFormulario('credito')">🗑 Limpar Campos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODELO VISUAL DO BLOCO DE DÉBITOS DELLY'S (HTML2CANVAS) -->
+    <div id="talao-digital" class="bloco-paper">
+        <div class="bloco-header">
+            <div class="bloco-logo">
+                <h2>DELLY'S</h2>
+                <span>FOOD SERVICE</span>
+            </div>
+            <div class="bloco-title-box">
+                <h1>BLOCO DE DÉBITOS</h1>
+                <div class="bloco-filiais">
+                    <span>FILIAL 7</span>
+                </div>
+            </div>
+            <div class="bloco-empresa-num">
+                <div class="empresa-nome">OESA COMÉRCIO E REPRESENTAÇÕES S/A</div>
+                <div class="bloco-num-destaque">Nº <span id="t-num-talao">110660</span></div>
+            </div>
+        </div>
+
+        <div class="bloco-section-header">DADOS DA DEVOLUÇÃO</div>
+        <div class="bloco-grid-rows">
+            <div class="grid-row">
+                <span><strong>Refaturamento:</strong> ( )</span>
+                <span><strong>Crédito:</strong> ( X )</span>
+                <span><strong>Retorno NF:</strong> ( )</span>
+                <span><strong>Data:</strong> <span id="t-data"></span></span>
+                <span><strong>Nº da NF:</strong> <span id="t-nf"></span></span>
+            </div>
+            <div class="grid-row">
+                <span><strong>Motorista:</strong> <span id="t-motorista"></span></span>
+                <span><strong>Ajudante:</strong> <span id="t-ajudante"></span></span>
+            </div>
+            <div class="grid-row">
+                <span><strong>Placa:</strong> <span id="t-placa"></span></span>
+                <span><strong>Representante:</strong> ( )</span>
+                <span><strong>Cliente:</strong> (<span id="t-cliente"></span>)</span>
+            </div>
+        </div>
+
+        <div class="bloco-section-header center">PRODUTOS</div>
+        <table class="bloco-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">CÓDIGO</th>
+                    <th style="width: 40%;">DESCRIÇÃO</th>
+                    <th style="width: 12%;">QUANTIDADE</th>
+                    <th style="width: 13%;">VALOR</th>
+                    <th style="width: 20%;">MOTIVO DEVOLUÇÃO</th>
+                </tr>
+            </thead>
+            <tbody id="t-itens-body"></tbody>
+        </table>
+
+        <div class="bloco-footer">
+            <div class="bloco-obs">
+                <strong>OBS:</strong> <span id="t-obs"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST DE NOTIFICAÇÃO -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
