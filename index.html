@@ -72,31 +72,42 @@
             <form id="form-retorno" class="form-section active">
                 <h3>📦 Registro de Retorno</h3>
                 <div class="form-group">
-                    <label for="retorno-nf">Número da NF *</label>
-                    <input type="text" id="retorno-nf" placeholder="Ex: 123456" inputmode="numeric" required>
-                </div>
-                <div class="form-group">
                     <label for="retorno-cliente">Código do Cliente *</label>
-                    <input type="text" id="retorno-cliente" placeholder="Ex: 12245" inputmode="numeric" required>
+                    <input type="text" id="retorno-cliente" placeholder="Ex: 12245" inputmode="numeric" pattern="[0-9]*" required>
                 </div>
-                <div class="form-group">
+
+                <div id="container-nfs-retorno">
+                    <div class="form-group dynamic-row" style="display: flex; gap: 5px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <label>Número da NF *</label>
+                            <input type="text" class="input-nf-retorno" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" onclick="adicionarCampoNfRetorno()">+ Adicionar outra NF</button>
+
+                <div class="form-group" style="margin-top: 15px;">
                     <label for="retorno-motivo">Motivo *</label>
-                    <select id="retorno-motivo" onchange="verificarOutroMotivo('retorno')" required>
+                    <select id="retorno-motivo" required>
                         <option value="">Selecione o motivo...</option>
-                        <option value="Cliente fechado">Cliente fechado</option>
-                        <option value="Recusa de mercadoria">Recusa de mercadoria</option>
-                        <option value="Endereço não localizado">Endereço não localizado</option>
-                        <option value="Falta de tempo hábil">Falta de tempo hábil</option>
-                        <option value="Outro">Outro</option>
+                        <option value="VENCIMENTO">VENCIMENTO</option>
+                        <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
+                        <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
+                        <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
+                        <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
+                        <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
+                        <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
+                        <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
+                        <option value="PRECO INCORRETO">PRECO INCORRETO</option>
+                        <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
+                        <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
+                        <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
+                        <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
                     </select>
-                </div>
-                <div class="form-group hidden" id="group-retorno-outro">
-                    <label for="retorno-outro">Especifique o Motivo *</label>
-                    <input type="text" id="retorno-outro" placeholder="Descreva o motivo">
                 </div>
                 <div class="action-buttons">
                     <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('retorno')">📲 Enviar pelo WhatsApp</button>
-                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('retorno')">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('retorno', this)">📋 Copiar Mensagem</button>
                     <button type="button" class="btn-action btn-clear" onclick="limparFormulario('retorno')">🗑 Limpar Campos</button>
                 </div>
             </form>
@@ -105,29 +116,37 @@
             <form id="form-reentrega" class="form-section">
                 <h3>🚚 Registro de Reentrega</h3>
                 <div id="container-nfs-reentrega">
-                    <div class="form-group">
-                        <label>Número da NF *</label>
-                        <input type="text" class="input-nf-reentrega" placeholder="Ex: 123456" inputmode="numeric" required>
+                    <div class="form-group dynamic-row" style="display: flex; gap: 5px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <label>Número da NF *</label>
+                            <input type="text" class="input-nf-reentrega" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required>
+                        </div>
                     </div>
                 </div>
                 <button type="button" class="btn-secondary" onclick="adicionarCampoNfReentrega()">+ Adicionar outra NF</button>
                 
                 <div class="form-group" style="margin-top: 15px;">
                     <label for="reentrega-motivo">Motivo *</label>
-                    <select id="reentrega-motivo" onchange="verificarOutroMotivo('reentrega')" required>
+                    <select id="reentrega-motivo" required>
                         <option value="">Selecione o motivo...</option>
-                        <option value="Solicitação do cliente">Solicitação do cliente</option>
-                        <option value="Horário estourado">Horário estourado</option>
-                        <option value="Outro">Outro</option>
+                        <option value="VENCIMENTO">VENCIMENTO</option>
+                        <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
+                        <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
+                        <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
+                        <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
+                        <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
+                        <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
+                        <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
+                        <option value="PRECO INCORRETO">PRECO INCORRETO</option>
+                        <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
+                        <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
+                        <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
+                        <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
                     </select>
-                </div>
-                <div class="form-group hidden" id="group-reentrega-outro">
-                    <label for="reentrega-outro">Especifique o Motivo *</label>
-                    <input type="text" id="reentrega-outro" placeholder="Descreva o motivo">
                 </div>
                 <div class="action-buttons">
                     <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('reentrega')">📲 Enviar pelo WhatsApp</button>
-                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('reentrega')">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('reentrega', this)">📋 Copiar Mensagem</button>
                     <button type="button" class="btn-action btn-clear" onclick="limparFormulario('reentrega')">🗑 Limpar Campos</button>
                 </div>
             </form>
@@ -137,38 +156,41 @@
                 <h3>💳 Registro de Crédito</h3>
                 <div class="form-group">
                     <label for="credito-nf">Número da NF *</label>
-                    <input type="text" id="credito-nf" placeholder="Ex: 123456" inputmode="numeric" required>
+                    <input type="text" id="credito-nf" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required>
                 </div>
                 <div class="form-group">
                     <label for="credito-cliente">Código do Cliente *</label>
-                    <input type="text" id="credito-cliente" placeholder="Ex: 12245" inputmode="numeric" required>
+                    <input type="text" id="credito-cliente" placeholder="Ex: 12245" inputmode="numeric" pattern="[0-9]*" required>
                 </div>
 
                 <div class="section-title">Produtos / Itens</div>
                 <div id="container-itens-credito">
-                    <div class="dynamic-item">
-                        <input type="text" class="item-codigo" placeholder="Cód" style="width: 25%;">
-                        <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="width: 50%;" required>
-                        <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 20%;" required>
+                    <div class="dynamic-item" style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; align-items: center;">
+                        <input type="text" class="item-codigo" placeholder="Cód" style="width: 20%;">
+                        <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="width: 50%; text-transform: uppercase;" required>
+                        <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 23%;" required>
+                        <input type="text" class="item-valor" placeholder="Valor (R$)" style="width: 35%;" inputmode="decimal">
+                        <select class="item-motivo" style="width: 50%; font-size: 13px;" required>
+                            <option value="">Selecione o motivo...</option>
+                            <option value="VENCIMENTO">VENCIMENTO</option>
+                            <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
+                            <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
+                            <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
+                            <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
+                            <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
+                            <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
+                            <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
+                            <option value="PRECO INCORRETO">PRECO INCORRETO</option>
+                            <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
+                            <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
+                            <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
+                            <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
+                        </select>
                     </div>
                 </div>
                 <button type="button" class="btn-secondary" onclick="adicionarItemCredito()">+ Adicionar Item</button>
 
                 <div class="form-group" style="margin-top: 15px;">
-                    <label for="credito-motivo">Motivo *</label>
-                    <select id="credito-motivo" onchange="verificarOutroMotivo('credito')" required>
-                        <option value="">Selecione o motivo...</option>
-                        <option value="Avaria em transporte">Avaria em transporte</option>
-                        <option value="Falta de produto">Falta de produto</option>
-                        <option value="Produto trocado">Produto trocado</option>
-                        <option value="Outro">Outro</option>
-                    </select>
-                </div>
-                <div class="form-group hidden" id="group-credito-outro">
-                    <label for="credito-outro">Especifique o Motivo *</label>
-                    <input type="text" id="credito-outro" placeholder="Descreva o motivo">
-                </div>
-                <div class="form-group">
                     <label for="credito-obs">Observações</label>
                     <textarea id="credito-obs" rows="2" placeholder="Observações adicionais (opcional)"></textarea>
                 </div>
@@ -176,7 +198,7 @@
                 <div class="action-buttons">
                     <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('credito')">📲 Enviar pelo WhatsApp</button>
                     <button type="button" class="btn-action btn-secondary" onclick="gerarImagemTalao()" style="background-color: #0284c7;">📄 Gerar Bloco de Débito</button>
-                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('credito')">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('credito', this)">📋 Copiar Mensagem</button>
                     <button type="button" class="btn-action btn-clear" onclick="limparFormulario('credito')">🗑 Limpar Campos</button>
                 </div>
             </form>
@@ -198,7 +220,7 @@
             </div>
             <div class="bloco-empresa-num">
                 <div class="empresa-nome">OESA COMÉRCIO E REPRESENTAÇÕES S/A</div>
-                <div class="bloco-num-destaque">Nº <span id="t-num-talao">110660</span></div>
+                <div class="bloco-num-destaque">Nº <span id="t-num-talao">CR-00000000</span></div>
             </div>
         </div>
 
@@ -227,13 +249,20 @@
             <thead>
                 <tr>
                     <th style="width: 15%;">CÓDIGO</th>
-                    <th style="width: 40%;">DESCRIÇÃO</th>
+                    <th style="width: 35%;">DESCRIÇÃO</th>
                     <th style="width: 12%;">QUANTIDADE</th>
-                    <th style="width: 13%;">VALOR</th>
-                    <th style="width: 20%;">MOTIVO DEVOLUÇÃO</th>
+                    <th style="width: 15%;">VALOR</th>
+                    <th style="width: 23%;">MOTIVO DEVOLUÇÃO</th>
                 </tr>
             </thead>
             <tbody id="t-itens-body"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: bold; padding: 4px 8px;">VALOR TOTAL:</td>
+                    <td id="t-valor-total" style="text-align: right; font-weight: bold; padding: 4px 8px;">R$ 0,00</td>
+                    <td></td>
+                </tr>
+            </tfoot>
         </table>
 
         <div class="bloco-footer">
