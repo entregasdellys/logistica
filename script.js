@@ -1,13 +1,11 @@
 /**
- * GERENCIADOR DE UUID / IDENTIFICADOR ÚNICO UNIVERSAL (OPÇÃO A)
+ * GERENCIADOR DE UUID / IDENTIFICADOR ÚNICO UNIVERSAL
  * Garante numeração exclusiva e à prova de colisão mesmo offline.
  */
 function gerarUUID() {
-    // Tenta usar a API nativa de Criptografia do Navegador se disponível
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return 'CR-' + crypto.randomUUID().split('-')[0].toUpperCase();
     }
-    // Fallback seguro caso rode em navegadores webviews mais antigos
     const hash = 'xxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0;
         const v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -172,11 +170,12 @@ function removerElemento(botao) {
 }
 
 /**
- * CONSTRUÇÃO DAS MENSAGENS DE WHATSAPP
+ * CONSTRUÇÃO DAS MENSAGENS E ENVIO PARA O BANCO DE DADOS
  */
 function gerarMensagem(tipo) {
     const motorista = localStorage.getItem('motorista_nome') || '';
     const placa = localStorage.getItem('motorista_placa') || '';
+    const ajudante = localStorage.getItem('motorista_ajudante') || '';
 
     let cabecalhoUser = '';
     if (motorista || placa) {
@@ -261,6 +260,9 @@ function gerarMensagem(tipo) {
 
         const itemRows = document.querySelectorAll('#container-itens-credito .dynamic-item');
         const itensColetados = [];
+        const registrosParaPlanilha = [];
+
+        const uuidUnico = gerarUUID();
 
         for (let row of itemRows) {
             const cod = row.querySelector('.item-codigo').value.trim();
@@ -275,11 +277,33 @@ function gerarMensagem(tipo) {
             }
 
             itensColetados.push({ cod, desc, qtd, valor, motivo });
+
+            // Mapeia para a estrutura da planilha no Google Apps Script (.gs)
+            registrosParaPlanilha.push({
+                ID: uuidUnico,
+                CPF_Motorista: "",
+                Motorista: motorista,
+                Placa: placa,
+                Ajudante: ajudante,
+                Cliente: cliente,
+                NF: nf,
+                CodProduto: cod,
+                Descricao: desc,
+                Qtd: qtd,
+                Valor: valor,
+                Motivo: motivo,
+                Obs: obs
+            });
         }
 
         if (itensColetados.length === 0) {
             exibirToast("Adicione pelo menos um item.");
             return null;
+        }
+
+        // Salva na fila do db.js para envio à planilha
+        if (typeof salvarCreditoLocal === "function") {
+            salvarCreditoLocal(registrosParaPlanilha);
         }
 
         let itensTexto = itensColetados.map(i => {
