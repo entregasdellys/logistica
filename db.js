@@ -1,11 +1,9 @@
-// URL do Web App gerado no Google Apps Script
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzECNzbr4SJYbfMbuxXNmEIedjFeErItj_nmqXoATDkvBrbXrqm-9hI_Jih9GuAaOYy/exec";
 
 const DB_NAME = "DellysLogisticaDB";
 const DB_VERSION = 1;
 const STORE_CREDITOS = "creditos_pendentes";
 
-// Inicializa o banco de dados IndexedDB no celular
 function abrirBanco() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -24,23 +22,41 @@ function abrirBanco() {
     });
 }
 
-// Salva o registro de crédito na fila local (IndexedDB)
+// Salva o registro no IndexedDB ignorando itens com dados idênticos já gravados
 async function salvarCreditoLocal(registrosArray) {
     try {
         const db = await abrirBanco();
         const tx = db.transaction(STORE_CREDITOS, "readwrite");
         const store = tx.objectStore(STORE_CREDITOS);
 
-        registrosArray.forEach(item => {
-            item.status = "PENDENTE";
-            item.criadoEm = new Date().toISOString();
-            store.add(item);
-        });
+        const requestGetAll = store.getAll();
+
+        requestGetAll.onsuccess = () => {
+            const existentes = requestGetAll.result || [];
+
+            registrosArray.forEach(novoItem => {
+                // Checa duplicidade por NF + Cliente + Código de Produto + Descrição
+                const jaExiste = existentes.some(item => 
+                    item.NF === novoItem.NF && 
+                    item.Cliente === novoItem.Cliente && 
+                    item.CodProduto === novoItem.CodProduto &&
+                    item.Descricao === novoItem.Descricao
+                );
+
+                if (!jaExiste) {
+                    novoItem.status = "PENDENTE";
+                    novoItem.criadoEm = new Date().toISOString();
+                    store.add(novoItem);
+                } else {
+                    console.warn(`Registro duplicado bloqueado: NF ${novoItem.NF} - Item ${novoItem.CodProduto}`);
+                }
+            });
+        };
 
         return new Promise((resolve, reject) => {
             tx.oncomplete = () => {
                 atualizarContadorPendentes();
-                sincronizarCreditosComServidor(); // Tenta sincronizar imediatamente se houver internet
+                sincronizarCreditosComServidor();
                 resolve(true);
             };
             tx.onerror = (err) => reject(err);
@@ -50,7 +66,6 @@ async function salvarCreditoLocal(registrosArray) {
     }
 }
 
-// Busca todos os registros pendentes e envia para o Google Sheets
 async function sincronizarCreditosComServidor() {
     if (!navigator.onLine) {
         console.log("Sem conexão no momento. Sincronização aguardará rede.");
@@ -75,7 +90,6 @@ async function sincronizarCreditosComServidor() {
             console.log(`Enviando ${pendentes.length} registro(s) para o Google Sheets...`);
 
             try {
-                // Envia array em lote para a planilha
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -85,7 +99,6 @@ async function sincronizarCreditosComServidor() {
                 const resData = await response.json();
 
                 if (resData.status === "success") {
-                    // Marca registros como SINCRONIZADO localmente
                     const txWrite = db.transaction(STORE_CREDITOS, "readwrite");
                     const storeWrite = txWrite.objectStore(STORE_CREDITOS);
 
@@ -111,7 +124,6 @@ async function sincronizarCreditosComServidor() {
     }
 }
 
-// Atualiza o contador de pendências na barra superior
 async function atualizarContadorPendentes() {
     try {
         const db = await abrirBanco();
@@ -138,7 +150,6 @@ async function atualizarContadorPendentes() {
     }
 }
 
-// Monitora alterações no status da conexão com a internet
 window.addEventListener("online", () => {
     if (typeof exibirToast === "function") {
         exibirToast("Conexão restabelecida! Sincronizando...");
