@@ -1,5 +1,5 @@
 // Mude esta constante (v2, v3, etc.) a cada nova atualização que subir para o servidor
-const CACHE_NAME = 'dellys-app-v3';
+const CACHE_NAME = 'dellys-app-v4';
 
 const ASSETS_TO_CACHE = [
   './',
