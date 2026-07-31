@@ -51,6 +51,7 @@
             <div class="user-info">
                 <span class="user-badge">🚛 Motorista: <strong id="bar-motorista">-</strong></span>
                 <span class="user-badge">🏷 Placa: <strong id="bar-placa">-</strong></span>
+                <span id="badge-sync-pendente" class="user-badge" style="display: none; background-color: #d97706; color: #ffffff;"></span>
             </div>
             <button type="button" class="btn-edit-user" onclick="alterarIdentificacao()">✏️ Alterar</button>
         </header>
@@ -275,6 +276,7 @@
     <!-- TOAST DE NOTIFICAÇÃO -->
     <div id="toast" class="toast"></div>
 
+    <script src="db.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

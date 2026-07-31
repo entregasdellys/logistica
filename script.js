@@ -139,7 +139,7 @@ function adicionarItemCredito() {
     div.style.cssText = 'display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; align-items: center;';
     div.innerHTML = `
         <input type="text" class="item-codigo" placeholder="Cód" style="width: 20%;">
-        <input type="text" class="item-descricao" placeholder="Descrição *" style="width: 50%; text-transform: uppercase;" required>
+        <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="width: 50%; text-transform: uppercase;" required>
         <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 23%;" required>
         <input type="text" class="item-valor" placeholder="Valor (R$)" style="width: 35%;" inputmode="decimal">
         <select class="item-motivo" style="width: 50%; font-size: 13px;" required>
@@ -172,11 +172,14 @@ function removerElemento(botao) {
 }
 
 /**
- * CONSTRUÇÃO DAS MENSAGENS DE WHATSAPP
+ * CONSTRUÇÃO DAS MENSAGENS DE WHATSAPP E SALVAMENTO LOCAL
  */
+let enviandoCredito = false;
+
 function gerarMensagem(tipo) {
     const motorista = localStorage.getItem('motorista_nome') || '';
     const placa = localStorage.getItem('motorista_placa') || '';
+    const ajudante = localStorage.getItem('motorista_ajudante') || '';
 
     let cabecalhoUser = '';
     if (motorista || placa) {
@@ -251,6 +254,11 @@ function gerarMensagem(tipo) {
     }
 
     if (tipo === 'credito') {
+        if (enviandoCredito) {
+            exibirToast("Aguarde, processando...");
+            return null;
+        }
+
         const nf = document.getElementById('credito-nf').value.trim();
         const cliente = document.getElementById('credito-cliente').value.trim();
         const obs = document.getElementById('credito-obs').value.trim();
@@ -261,13 +269,21 @@ function gerarMensagem(tipo) {
 
         const itemRows = document.querySelectorAll('#container-itens-credito .dynamic-item');
         const itensColetados = [];
+        const registrosParaPlanilha = [];
+        const uuidUnico = gerarUUID();
 
         for (let row of itemRows) {
-            const cod = row.querySelector('.item-codigo').value.trim();
-            const desc = row.querySelector('.item-descricao').value.trim().toUpperCase();
-            const qtd = row.querySelector('.item-quantidade').value.trim();
-            const valor = row.querySelector('.item-valor').value.trim();
-            const motivo = row.querySelector('.item-motivo').value;
+            const codInput = row.querySelector('.item-codigo');
+            const descInput = row.querySelector('.item-descricao');
+            const qtdInput = row.querySelector('.item-quantidade');
+            const valorInput = row.querySelector('.item-valor');
+            const motivoSelect = row.querySelector('.item-motivo');
+
+            const cod = codInput ? codInput.value.trim() : '';
+            const desc = descInput ? descInput.value.trim().toUpperCase() : '';
+            const qtd = qtdInput ? qtdInput.value.trim() : '';
+            const valor = valorInput ? valorInput.value.trim() : '';
+            const motivo = motivoSelect ? motivoSelect.value : '';
 
             if (!desc || !qtd || !motivo) {
                 exibirToast("Preencha Descrição, Qtd e Motivo de todos os itens.");
@@ -275,11 +291,34 @@ function gerarMensagem(tipo) {
             }
 
             itensColetados.push({ cod, desc, qtd, valor, motivo });
+
+            registrosParaPlanilha.push({
+                ID: uuidUnico,
+                CPF_Motorista: "",
+                Motorista: motorista,
+                Placa: placa,
+                Ajudante: ajudante,
+                Cliente: cliente,
+                NF: nf,
+                CodProduto: cod,
+                Descricao: desc,
+                Qtd: qtd,
+                Valor: valor,
+                Motivo: motivo,
+                Obs: obs
+            });
         }
 
         if (itensColetados.length === 0) {
             exibirToast("Adicione pelo menos um item.");
             return null;
+        }
+
+        enviandoCredito = true;
+        setTimeout(() => { enviandoCredito = false; }, 3000);
+
+        if (typeof salvarCreditoLocal === "function") {
+            salvarCreditoLocal(registrosParaPlanilha);
         }
 
         let itensTexto = itensColetados.map(i => {
@@ -331,7 +370,7 @@ function copiarMensagem(tipo, btnElement) {
 
 function limparFormulario(tipo) {
     const form = document.getElementById(`form-${tipo}`);
-    form.reset();
+    if (form) form.reset();
 
     if (tipo === 'retorno') {
         const container = document.getElementById('container-nfs-retorno');
@@ -423,11 +462,17 @@ function gerarImagemTalao() {
     let somaTotalValores = 0;
 
     itemRows.forEach(row => {
-        const cod = row.querySelector('.item-codigo').value.trim();
-        const desc = row.querySelector('.item-descricao').value.trim().toUpperCase();
-        const qtd = row.querySelector('.item-quantidade').value.trim();
-        const valorRaw = row.querySelector('.item-valor').value.trim();
-        const motivo = row.querySelector('.item-motivo').value;
+        const codInput = row.querySelector('.item-codigo');
+        const descInput = row.querySelector('.item-descricao');
+        const qtdInput = row.querySelector('.item-quantidade');
+        const valorInput = row.querySelector('.item-valor');
+        const motivoSelect = row.querySelector('.item-motivo');
+
+        const cod = codInput ? codInput.value.trim() : '';
+        const desc = descInput ? descInput.value.trim().toUpperCase() : '';
+        const qtd = qtdInput ? qtdInput.value.trim() : '';
+        const valorRaw = valorInput ? valorInput.value.trim() : '';
+        const motivo = motivoSelect ? motivoSelect.value : '';
 
         if (desc && qtd && motivo) {
             possuiItemValido = true;
