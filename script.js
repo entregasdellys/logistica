@@ -1,6 +1,5 @@
 /**
  * GERENCIADOR DE UUID / IDENTIFICADOR ÚNICO UNIVERSAL
- * Garante numeração exclusiva e à prova de colisão mesmo offline.
  */
 function gerarUUID() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -99,7 +98,6 @@ function trocarAba(evt, aba) {
     }
 }
 
-/* ADICIONAR E REMOVER NFS EM RETORNO */
 function adicionarCampoNfRetorno() {
     const container = document.getElementById('container-nfs-retorno');
     const div = document.createElement('div');
@@ -114,7 +112,6 @@ function adicionarCampoNfRetorno() {
     container.appendChild(div);
 }
 
-/* ADICIONAR E REMOVER NFS EM REENTREGA */
 function adicionarCampoNfReentrega() {
     const container = document.getElementById('container-nfs-reentrega');
     const div = document.createElement('div');
@@ -129,7 +126,6 @@ function adicionarCampoNfReentrega() {
     container.appendChild(div);
 }
 
-/* ADICIONAR E REMOVER ITENS EM CRÉDITO */
 function adicionarItemCredito() {
     const container = document.getElementById('container-itens-credito');
     const div = document.createElement('div');
@@ -161,7 +157,6 @@ function adicionarItemCredito() {
     container.appendChild(div);
 }
 
-/* FUNÇÃO GENÉRICA DE REMOÇÃO DE LINHAS/ITENS DINÂMICOS */
 function removerElemento(botao) {
     const parent = botao.parentElement;
     if (parent) {
@@ -170,8 +165,10 @@ function removerElemento(botao) {
 }
 
 /**
- * CONSTRUÇÃO DAS MENSAGENS E ENVIO PARA O BANCO DE DADOS
+ * TRAVA CONTRA DUPLO CLIQUE E GERENCIAMENTO DE ENVIO
  */
+let enviandoCredito = false;
+
 function gerarMensagem(tipo) {
     const motorista = localStorage.getItem('motorista_nome') || '';
     const placa = localStorage.getItem('motorista_placa') || '';
@@ -250,6 +247,12 @@ function gerarMensagem(tipo) {
     }
 
     if (tipo === 'credito') {
+        // Trava de segurança para impedir requisições simultâneas
+        if (enviandoCredito) {
+            exibirToast("Aguarde, processando crédito anterior...");
+            return null;
+        }
+
         const nf = document.getElementById('credito-nf').value.trim();
         const cliente = document.getElementById('credito-cliente').value.trim();
         const obs = document.getElementById('credito-obs').value.trim();
@@ -278,7 +281,6 @@ function gerarMensagem(tipo) {
 
             itensColetados.push({ cod, desc, qtd, valor, motivo });
 
-            // Mapeia para a estrutura da planilha no Google Apps Script (.gs)
             registrosParaPlanilha.push({
                 ID: uuidUnico,
                 CPF_Motorista: "",
@@ -300,6 +302,10 @@ function gerarMensagem(tipo) {
             exibirToast("Adicione pelo menos um item.");
             return null;
         }
+
+        // Ativa a trava de processamento por 3 segundos
+        enviandoCredito = true;
+        setTimeout(() => { enviandoCredito = false; }, 3000);
 
         // Salva na fila do db.js para envio à planilha
         if (typeof salvarCreditoLocal === "function") {
@@ -332,6 +338,11 @@ function enviarWhatsApp(tipo) {
     const msg = gerarMensagem(tipo);
     if (msg) {
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+        
+        // Zera o formulário após a confirmação para evitar reenvio
+        setTimeout(() => {
+            limparFormulario(tipo);
+        }, 500);
     }
 }
 
@@ -349,13 +360,18 @@ function copiarMensagem(tipo, btnElement) {
                     btnElement.style.backgroundColor = "";
                 }, 2000);
             }
+
+            // Zera o formulário após copiar
+            setTimeout(() => {
+                limparFormulario(tipo);
+            }, 500);
         });
     }
 }
 
 function limparFormulario(tipo) {
     const form = document.getElementById(`form-${tipo}`);
-    form.reset();
+    if (form) form.reset();
 
     if (tipo === 'retorno') {
         const container = document.getElementById('container-nfs-retorno');
@@ -409,11 +425,11 @@ function limparFormulario(tipo) {
         `;
     }
 
-    exibirToast("Campos limpados.");
+    exibirToast("Formulário pronto para novo lançamento.");
 }
 
 /**
- * GERAÇÃO DO BLOCO DE DÉBITOS DELLY'S COM UUID ÚNICO
+ * GERAÇÃO DO BLOCO DE DÉBITOS DELLY'S
  */
 function gerarImagemTalao() {
     const nf = document.getElementById('credito-nf').value.trim();
@@ -434,7 +450,6 @@ function gerarImagemTalao() {
     document.getElementById('t-data').textContent = new Date().toLocaleDateString('pt-BR');
     document.getElementById('t-obs').textContent = obs || '';
     
-    // GERAÇÃO DO NÚMERO DO BLOCO VIA UUID ÚNICO
     const codigoUnicoBloco = gerarUUID();
     document.getElementById('t-num-talao').textContent = codigoUnicoBloco;
 
@@ -498,7 +513,12 @@ function gerarImagemTalao() {
         link.click();
 
         talao.style.display = 'none';
-        exibirToast("Imagem gerada com sucesso!");
+        
+        // Zera o formulário após a criação da imagem
+        setTimeout(() => {
+            limparFormulario('credito');
+        }, 500);
+
     }).catch(err => {
         talao.style.display = 'none';
         exibirToast("Erro ao gerar imagem.");
