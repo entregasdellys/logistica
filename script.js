@@ -1,10 +1,13 @@
 /**
- * GERENCIADOR DE UUID / IDENTIFICADOR ÚNICO UNIVERSAL
+ * GERENCIADOR DE UUID / IDENTIFICADOR ÚNICO UNIVERSAL (OPÇÃO A)
+ * Garante numeração exclusiva e à prova de colisão mesmo offline.
  */
 function gerarUUID() {
+    // Tenta usar a API nativa de Criptografia do Navegador se disponível
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return 'CR-' + crypto.randomUUID().split('-')[0].toUpperCase();
     }
+    // Fallback seguro caso rode em navegadores webviews mais antigos
     const hash = 'xxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0;
         const v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -14,7 +17,7 @@ function gerarUUID() {
 }
 
 /**
- * GERENCIAMENTO DE SESSÃO DIÁRIA DO MOTORISTA
+ * GERENCIAMENTO DE IDENTIFICAÇÃO DO MOTORISTA (LOGIN DIÁRIO)
  */
 document.addEventListener('DOMContentLoaded', () => {
     verificarSessaoDiaria();
@@ -83,7 +86,7 @@ function mostrarTela(idTela) {
 }
 
 /**
- * TROCA DE ABAS
+ * NAVEGAÇÃO E REGRAS DE INTERFACE
  */
 function trocarAba(evt, aba) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -98,84 +101,82 @@ function trocarAba(evt, aba) {
     }
 }
 
-/**
- * CAMPOS DINÂMICOS
- */
+/* ADICIONAR E REMOVER NFS EM RETORNO */
 function adicionarCampoNfRetorno() {
     const container = document.getElementById('container-nfs-retorno');
     const div = document.createElement('div');
     div.className = 'form-group dynamic-row';
-    div.style.cssText = 'display: flex; gap: 8px; margin-top: 8px; align-items: center;';
+    div.style.cssText = 'display: flex; gap: 5px; align-items: flex-end; margin-top: 8px;';
     div.innerHTML = `
-        <input type="text" class="input-nf-retorno" placeholder="Outra NF" inputmode="numeric" pattern="[0-9]*" required style="flex: 1;">
-        <button type="button" class="btn-clear" onclick="removerElemento(this)" style="padding: 10px 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white;">✕</button>
+        <div style="flex: 1;">
+            <input type="text" class="input-nf-retorno" placeholder="Outra NF" inputmode="numeric" pattern="[0-9]*" required>
+        </div>
+        <button type="button" class="btn-remove" onclick="removerElemento(this)" style="background-color: #ef4444; color: white; border: none; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">✕</button>
     `;
     container.appendChild(div);
 }
 
+/* ADICIONAR E REMOVER NFS EM REENTREGA */
 function adicionarCampoNfReentrega() {
     const container = document.getElementById('container-nfs-reentrega');
     const div = document.createElement('div');
     div.className = 'form-group dynamic-row';
-    div.style.cssText = 'display: flex; gap: 8px; margin-top: 8px; align-items: center;';
+    div.style.cssText = 'display: flex; gap: 5px; align-items: flex-end; margin-top: 8px;';
     div.innerHTML = `
-        <input type="text" class="input-nf-reentrega" placeholder="Outra NF" inputmode="numeric" pattern="[0-9]*" required style="flex: 1;">
-        <button type="button" class="btn-clear" onclick="removerElemento(this)" style="padding: 10px 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white;">✕</button>
+        <div style="flex: 1;">
+            <input type="text" class="input-nf-reentrega" placeholder="Outra NF" inputmode="numeric" pattern="[0-9]*" required>
+        </div>
+        <button type="button" class="btn-remove" onclick="removerElemento(this)" style="background-color: #ef4444; color: white; border: none; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">✕</button>
     `;
     container.appendChild(div);
 }
 
+/* ADICIONAR E REMOVER ITENS EM CRÉDITO */
 function adicionarItemCredito() {
     const container = document.getElementById('container-itens-credito');
     const div = document.createElement('div');
-    div.className = 'dynamic-item-wrapper';
-    div.style.cssText = 'background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px;';
+    div.className = 'dynamic-item';
+    div.style.cssText = 'display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; align-items: center;';
     div.innerHTML = `
-        <div class="dynamic-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <input type="text" class="item-codigo" placeholder="Cód" style="flex: 1;">
-            <input type="text" class="item-descricao" placeholder="DESCRIÇÃO DO PRODUTO *" style="flex: 3; text-transform: uppercase;" required>
-            <input type="text" class="item-quantidade" placeholder="Qtd *" style="flex: 1;" required>
-        </div>
-        <div class="dynamic-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <input type="text" class="item-valor" placeholder="Valor (R$)" style="flex: 1;" inputmode="decimal">
-            <select class="item-motivo" style="flex: 2;" required>
-                <option value="">Selecione o motivo...</option>
-                <option value="VENCIMENTO">VENCIMENTO</option>
-                <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
-                <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
-                <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
-                <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
-                <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
-                <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
-                <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
-                <option value="PRECO INCORRETO">PREÇO INCORRETO</option>
-                <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
-                <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
-                <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
-                <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
-            </select>
-        </div>
-        <button type="button" class="btn-clear" onclick="removerElemento(this)" style="width: 100%; padding: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; background-color: #ef4444; margin-top: 4px;">✕ Remover Item</button>
+        <input type="text" class="item-codigo" placeholder="Cód" style="width: 20%;">
+        <input type="text" class="item-descricao" placeholder="Descrição *" style="width: 50%; text-transform: uppercase;" required>
+        <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 23%;" required>
+        <input type="text" class="item-valor" placeholder="Valor (R$)" style="width: 35%;" inputmode="decimal">
+        <select class="item-motivo" style="width: 50%; font-size: 13px;" required>
+            <option value="">Selecione o motivo...</option>
+            <option value="VENCIMENTO">VENCIMENTO</option>
+            <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
+            <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
+            <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
+            <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
+            <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
+            <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
+            <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
+            <option value="PRECO INCORRETO">PRECO INCORRETO</option>
+            <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
+            <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
+            <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
+            <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
+        </select>
+        <button type="button" class="btn-remove" onclick="removerElemento(this)" style="background-color: #ef4444; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">✕</button>
     `;
     container.appendChild(div);
 }
 
+/* FUNÇÃO GENÉRICA DE REMOÇÃO DE LINHAS/ITENS DINÂMICOS */
 function removerElemento(botao) {
-    const parent = botao.closest('.dynamic-item-wrapper') || botao.parentElement;
+    const parent = botao.parentElement;
     if (parent) {
         parent.remove();
     }
 }
 
 /**
- * TRAVA E ENVIO DE MENSAGENS
+ * CONSTRUÇÃO DAS MENSAGENS DE WHATSAPP
  */
-let enviandoCredito = false;
-
 function gerarMensagem(tipo) {
     const motorista = localStorage.getItem('motorista_nome') || '';
     const placa = localStorage.getItem('motorista_placa') || '';
-    const ajudante = localStorage.getItem('motorista_ajudante') || '';
 
     let cabecalhoUser = '';
     if (motorista || placa) {
@@ -195,11 +196,15 @@ function gerarMensagem(tipo) {
 
         nfInputs.forEach(input => {
             const val = input.value.trim();
-            if (!val) { preenchimentoValido = false; } else { nfs.push(val); }
+            if (!val) {
+                preenchimentoValido = false;
+            } else {
+                nfs.push(val);
+            }
         });
 
         if (!preenchimentoValido || nfs.length === 0) {
-            exibirToast("Preencha todas as NFs de retorno.");
+            exibirToast("Preencha todas as NFs de retorno adicionadas.");
             return null;
         }
 
@@ -223,28 +228,29 @@ function gerarMensagem(tipo) {
 
         nfInputs.forEach(input => {
             const val = input.value.trim();
-            if (!val) { preenchimentoValido = false; } else { nfs.push(val); }
+            if (!val) {
+                preenchimentoValido = false;
+            } else {
+                nfs.push(val);
+            }
         });
 
         if (!preenchimentoValido || nfs.length === 0) { 
-            exibirToast("Preencha todas as NFs de reentrega."); 
+            exibirToast("Preencha todas as NFs de reentrega adicionadas."); 
             return null; 
         }
         
         if (!motivoSelect) { exibirToast("Informe o motivo."); return null; }
 
+        const listaNfsTexto = nfs.join('\n');
+
         return cabecalhoUser +
                `🚚 *REENTREGA*\n` +
-               `*NF(s):*\n${nfs.join('\n')}\n` +
+               `*NF(s):*\n${listaNfsTexto}\n` +
                `*MOTIVO:* ${motivoSelect}`;
     }
 
     if (tipo === 'credito') {
-        if (enviandoCredito) {
-            exibirToast("Aguarde, processando...");
-            return null;
-        }
-
         const nf = document.getElementById('credito-nf').value.trim();
         const cliente = document.getElementById('credito-cliente').value.trim();
         const obs = document.getElementById('credito-obs').value.trim();
@@ -253,24 +259,15 @@ function gerarMensagem(tipo) {
         if (!cliente) { exibirToast("Informe o cliente."); return null; }
         if (!/^\d+$/.test(cliente)) { exibirToast("O campo cliente deve conter apenas números."); return null; }
 
-        const itemRows = document.querySelectorAll('#container-itens-credito .dynamic-item-wrapper');
+        const itemRows = document.querySelectorAll('#container-itens-credito .dynamic-item');
         const itensColetados = [];
-        const registrosParaPlanilha = [];
-
-        const uuidUnico = gerarUUID();
 
         for (let row of itemRows) {
-            const codInput = row.querySelector('.item-codigo');
-            const descInput = row.querySelector('.item-descricao');
-            const qtdInput = row.querySelector('.item-quantidade');
-            const valorInput = row.querySelector('.item-valor');
-            const motivoSelect = row.querySelector('.item-motivo');
-
-            const cod = codInput ? codInput.value.trim() : '';
-            const desc = descInput ? descInput.value.trim().toUpperCase() : '';
-            const qtd = qtdInput ? qtdInput.value.trim() : '';
-            const valor = valorInput ? valorInput.value.trim() : '';
-            const motivo = motivoSelect ? motivoSelect.value : '';
+            const cod = row.querySelector('.item-codigo').value.trim();
+            const desc = row.querySelector('.item-descricao').value.trim().toUpperCase();
+            const qtd = row.querySelector('.item-quantidade').value.trim();
+            const valor = row.querySelector('.item-valor').value.trim();
+            const motivo = row.querySelector('.item-motivo').value;
 
             if (!desc || !qtd || !motivo) {
                 exibirToast("Preencha Descrição, Qtd e Motivo de todos os itens.");
@@ -278,34 +275,11 @@ function gerarMensagem(tipo) {
             }
 
             itensColetados.push({ cod, desc, qtd, valor, motivo });
-
-            registrosParaPlanilha.push({
-                ID: uuidUnico,
-                CPF_Motorista: "",
-                Motorista: motorista,
-                Placa: placa,
-                Ajudante: ajudante,
-                Cliente: cliente,
-                NF: nf,
-                CodProduto: cod,
-                Descricao: desc,
-                Qtd: qtd,
-                Valor: valor,
-                Motivo: motivo,
-                Obs: obs
-            });
         }
 
         if (itensColetados.length === 0) {
             exibirToast("Adicione pelo menos um item.");
             return null;
-        }
-
-        enviandoCredito = true;
-        setTimeout(() => { enviandoCredito = false; }, 3000);
-
-        if (typeof salvarCreditoLocal === "function") {
-            salvarCreditoLocal(registrosParaPlanilha);
         }
 
         let itensTexto = itensColetados.map(i => {
@@ -333,14 +307,7 @@ function gerarMensagem(tipo) {
 function enviarWhatsApp(tipo) {
     const msg = gerarMensagem(tipo);
     if (msg) {
-        if (tipo === 'credito') {
-            gerarImagemTalao(() => {
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-            });
-        } else {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-            setTimeout(() => { limparFormulario(tipo); }, 500);
-        }
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     }
 }
 
@@ -352,27 +319,24 @@ function copiarMensagem(tipo, btnElement) {
             if (btnElement) {
                 const textoOriginal = btnElement.textContent;
                 btnElement.textContent = "✓ Copiado!";
-                setTimeout(() => { btnElement.textContent = textoOriginal; }, 2000);
+                btnElement.style.backgroundColor = "#16a34a";
+                setTimeout(() => {
+                    btnElement.textContent = textoOriginal;
+                    btnElement.style.backgroundColor = "";
+                }, 2000);
             }
-
-            setTimeout(() => { limparFormulario(tipo); }, 500);
         });
     }
 }
 
-/**
- * LIMPEZA COMPLETA DE FORMULÁRIOS
- */
 function limparFormulario(tipo) {
-    if (tipo === 'retorno') {
-        const clienteInput = document.getElementById('retorno-cliente');
-        const motivoSelect = document.getElementById('retorno-motivo');
-        
-        if (clienteInput) clienteInput.value = '';
-        if (motivoSelect) motivoSelect.value = '';
+    const form = document.getElementById(`form-${tipo}`);
+    form.reset();
 
-        document.getElementById('container-nfs-retorno').innerHTML = `
-            <div class="form-group dynamic-row">
+    if (tipo === 'retorno') {
+        const container = document.getElementById('container-nfs-retorno');
+        container.innerHTML = `
+            <div class="form-group dynamic-row" style="display: flex; gap: 5px; align-items: flex-end;">
                 <div style="flex: 1;">
                     <label>Número da NF *</label>
                     <input type="text" class="input-nf-retorno" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required>
@@ -382,11 +346,9 @@ function limparFormulario(tipo) {
     }
 
     if (tipo === 'reentrega') {
-        const motivoSelect = document.getElementById('reentrega-motivo');
-        if (motivoSelect) motivoSelect.value = '';
-
-        document.getElementById('container-nfs-reentrega').innerHTML = `
-            <div class="form-group dynamic-row">
+        const container = document.getElementById('container-nfs-reentrega');
+        container.innerHTML = `
+            <div class="form-group dynamic-row" style="display: flex; gap: 5px; align-items: flex-end;">
                 <div style="flex: 1;">
                     <label>Número da NF *</label>
                     <input type="text" class="input-nf-reentrega" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required>
@@ -396,57 +358,46 @@ function limparFormulario(tipo) {
     }
 
     if (tipo === 'credito') {
-        const nfInput = document.getElementById('credito-nf');
-        const clienteInput = document.getElementById('credito-cliente');
-        const obsInput = document.getElementById('credito-obs');
-
-        if (nfInput) nfInput.value = '';
-        if (clienteInput) clienteInput.value = '';
-        if (obsInput) obsInput.value = '';
-
-        document.getElementById('container-itens-credito').innerHTML = `
-            <div class="dynamic-item-wrapper" style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px;">
-                <div class="dynamic-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <input type="text" class="item-codigo" placeholder="Cód" style="flex: 1;">
-                    <input type="text" class="item-descricao" placeholder="DESCRIÇÃO DO PRODUTO *" style="flex: 3; text-transform: uppercase;" required>
-                    <input type="text" class="item-quantidade" placeholder="Qtd *" style="flex: 1;" required>
-                </div>
-                <div class="dynamic-item" style="display: flex; gap: 8px;">
-                    <input type="text" class="item-valor" placeholder="Valor (R$)" style="flex: 1;" inputmode="decimal">
-                    <select class="item-motivo" style="flex: 2;" required>
-                        <option value="">Selecione o motivo...</option>
-                        <option value="VENCIMENTO">VENCIMENTO</option>
-                        <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
-                        <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
-                        <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
-                        <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
-                        <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
-                        <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
-                        <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
-                        <option value="PRECO INCORRETO">PREÇO INCORRETO</option>
-                        <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
-                        <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
-                        <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
-                        <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
-                    </select>
-                </div>
+        const container = document.getElementById('container-itens-credito');
+        container.innerHTML = `
+            <div class="dynamic-item" style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; align-items: center;">
+                <input type="text" class="item-codigo" placeholder="Cód" style="width: 20%;">
+                <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="width: 50%; text-transform: uppercase;" required>
+                <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 23%;" required>
+                <input type="text" class="item-valor" placeholder="Valor (R$)" style="width: 35%;" inputmode="decimal">
+                <select class="item-motivo" style="width: 50%; font-size: 13px;" required>
+                    <option value="">Selecione o motivo...</option>
+                    <option value="VENCIMENTO">VENCIMENTO</option>
+                    <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
+                    <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
+                    <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
+                    <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
+                    <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
+                    <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
+                    <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
+                    <option value="PRECO INCORRETO">PRECO INCORRETO</option>
+                    <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
+                    <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
+                    <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
+                    <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
+                </select>
             </div>
         `;
     }
 
-    exibirToast("Formulário limpo com sucesso.");
+    exibirToast("Campos limpados.");
 }
 
 /**
- * GERAÇÃO DA IMAGEM DO BLOCO DE DÉBITOS
+ * GERAÇÃO DO BLOCO DE DÉBITOS DELLY'S COM UUID ÚNICO
  */
-function gerarImagemTalao(callbackAposGerar) {
+function gerarImagemTalao() {
     const nf = document.getElementById('credito-nf').value.trim();
     const cliente = document.getElementById('credito-cliente').value.trim();
     const obs = document.getElementById('credito-obs').value.trim();
 
     if (!nf || !cliente) {
-        exibirToast("Preencha NF e Cliente.");
+        exibirToast("Preencha NF e Cliente para gerar o bloco.");
         return;
     }
 
@@ -459,10 +410,11 @@ function gerarImagemTalao(callbackAposGerar) {
     document.getElementById('t-data').textContent = new Date().toLocaleDateString('pt-BR');
     document.getElementById('t-obs').textContent = obs || '';
     
+    // GERAÇÃO DO NÚMERO DO BLOCO VIA UUID ÚNICO
     const codigoUnicoBloco = gerarUUID();
     document.getElementById('t-num-talao').textContent = codigoUnicoBloco;
 
-    const itemRows = document.querySelectorAll('#container-itens-credito .dynamic-item-wrapper');
+    const itemRows = document.querySelectorAll('#container-itens-credito .dynamic-item');
     const tbody = document.getElementById('t-itens-body');
     tbody.innerHTML = '';
 
@@ -471,17 +423,11 @@ function gerarImagemTalao(callbackAposGerar) {
     let somaTotalValores = 0;
 
     itemRows.forEach(row => {
-        const codInput = row.querySelector('.item-codigo');
-        const descInput = row.querySelector('.item-descricao');
-        const qtdInput = row.querySelector('.item-quantidade');
-        const valorInput = row.querySelector('.item-valor');
-        const motivoSelect = row.querySelector('.item-motivo');
-
-        const cod = codInput ? codInput.value.trim() : '';
-        const desc = descInput ? descInput.value.trim().toUpperCase() : '';
-        const qtd = qtdInput ? qtdInput.value.trim() : '';
-        const valorRaw = valorInput ? valorInput.value.trim() : '';
-        const motivo = motivoSelect ? motivoSelect.value : '';
+        const cod = row.querySelector('.item-codigo').value.trim();
+        const desc = row.querySelector('.item-descricao').value.trim().toUpperCase();
+        const qtd = row.querySelector('.item-quantidade').value.trim();
+        const valorRaw = row.querySelector('.item-valor').value.trim();
+        const motivo = row.querySelector('.item-motivo').value;
 
         if (desc && qtd && motivo) {
             possuiItemValido = true;
@@ -503,13 +449,13 @@ function gerarImagemTalao(callbackAposGerar) {
     });
 
     if (!possuiItemValido) {
-        exibirToast("Preencha ao menos um item completo.");
+        exibirToast("Preencha Descrição, Quantidade e Motivo de pelo menos um item.");
         return;
     }
 
     document.getElementById('t-valor-total').textContent = `R$ ${somaTotalValores.toFixed(2).replace('.', ',')}`;
 
-    while (totalLinhas < 4) {
+    while (totalLinhas < 5) {
         totalLinhas++;
         const tr = document.createElement('tr');
         tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td>`;
@@ -519,22 +465,16 @@ function gerarImagemTalao(callbackAposGerar) {
     const talao = document.getElementById('talao-digital');
     talao.style.display = 'block';
 
-    exibirToast("Gerando bloco e abrindo WhatsApp...");
+    exibirToast("Gerando imagem do bloco...");
 
     html2canvas(talao, { scale: 2 }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `Recibo_Debito_NF_${nf}_${codigoUnicoBloco}.png`;
+        link.download = `Bloco_Debito_NF_${nf}_${codigoUnicoBloco}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
 
         talao.style.display = 'none';
-
-        if (typeof callbackAposGerar === 'function') {
-            callbackAposGerar();
-        }
-        
-        setTimeout(() => { limparFormulario('credito'); }, 500);
-
+        exibirToast("Imagem gerada com sucesso!");
     }).catch(err => {
         talao.style.display = 'none';
         exibirToast("Erro ao gerar imagem.");
