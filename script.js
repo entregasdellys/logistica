@@ -136,11 +136,11 @@ function adicionarItemCredito() {
             <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 35%;" required>
             <input type="text" class="item-valor" placeholder="Valor R$" style="width: 40%;" inputmode="decimal">
         </div>
-        <div class="form-group" style="margin-bottom: 8px;">
-            <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="text-transform: uppercase;" required>
+        <div class="form-group" style="margin-bottom: 8px; margin-top: 8px;">
+            <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="text-transform: uppercase; width: 100%;" required>
         </div>
         <div class="form-group" style="margin-bottom: 8px;">
-            <select class="item-motivo" required>
+            <select class="item-motivo" style="width: 100%;" required>
                 <option value="">Selecione o motivo...</option>
                 <option value="VENCIMENTO">VENCIMENTO</option>
                 <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
@@ -157,13 +157,13 @@ function adicionarItemCredito() {
                 <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
             </select>
         </div>
-        <button type="button" class="btn-clear" onclick="removerElemento(this)" style="width: 100%; padding: 6px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white;">✕ Remover Item</button>
+        <button type="button" class="btn-clear" onclick="removerElemento(this)" style="width: 100%; padding: 6px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; background-color: #ef4444;">✕ Remover Item</button>
     `;
     container.appendChild(div);
 }
 
 function removerElemento(botao) {
-    const parent = botao.parentElement;
+    const parent = botao.closest('.dynamic-item-wrapper') || botao.parentElement;
     if (parent) {
         parent.remove();
     }
@@ -262,14 +262,20 @@ function gerarMensagem(tipo) {
         const uuidUnico = gerarUUID();
 
         for (let row of itemRows) {
-            const cod = row.querySelector('.item-codigo').value.trim();
-            const desc = row.querySelector('.item-descricao').value.trim().toUpperCase();
-            const qtd = row.querySelector('.item-quantidade').value.trim();
-            const valor = row.querySelector('.item-valor').value.trim();
-            const motivo = row.querySelector('.item-motivo').value;
+            const codInput = row.querySelector('.item-codigo');
+            const descInput = row.querySelector('.item-descricao');
+            const qtdInput = row.querySelector('.item-quantidade');
+            const valorInput = row.querySelector('.item-valor');
+            const motivoSelect = row.querySelector('.item-motivo');
+
+            const cod = codInput ? codInput.value.trim() : '';
+            const desc = descInput ? descInput.value.trim().toUpperCase() : '';
+            const qtd = qtdInput ? qtdInput.value.trim() : '';
+            const valor = valorInput ? valorInput.value.trim() : '';
+            const motivo = motivoSelect ? motivoSelect.value : '';
 
             if (!desc || !qtd || !motivo) {
-                exibirToast("Preencha Descrição, Qtd e Motivo dos itens.");
+                exibirToast("Preencha Descrição, Qtd e Motivo de todos os itens.");
                 return null;
             }
 
@@ -329,8 +335,14 @@ function gerarMensagem(tipo) {
 function enviarWhatsApp(tipo) {
     const msg = gerarMensagem(tipo);
     if (msg) {
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-        setTimeout(() => { limparFormulario(tipo); }, 500);
+        if (tipo === 'credito') {
+            gerarImagemTalao(() => {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+            });
+        } else {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+            setTimeout(() => { limparFormulario(tipo); }, 500);
+        }
     }
 }
 
@@ -401,11 +413,11 @@ function limparFormulario(tipo) {
                     <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 35%;" required>
                     <input type="text" class="item-valor" placeholder="Valor R$" style="width: 40%;" inputmode="decimal">
                 </div>
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="text-transform: uppercase;" required>
+                <div class="form-group" style="margin-bottom: 8px; margin-top: 8px;">
+                    <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="text-transform: uppercase; width: 100%;" required>
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
-                    <select class="item-motivo" required>
+                    <select class="item-motivo" style="width: 100%;" required>
                         <option value="">Selecione o motivo...</option>
                         <option value="VENCIMENTO">VENCIMENTO</option>
                         <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
@@ -432,7 +444,7 @@ function limparFormulario(tipo) {
 /**
  * GERAÇÃO DA IMAGEM DO BLOCO DE DÉBITOS
  */
-function gerarImagemTalao() {
+function gerarImagemTalao(callbackAposGerar) {
     const nf = document.getElementById('credito-nf').value.trim();
     const cliente = document.getElementById('credito-cliente').value.trim();
     const obs = document.getElementById('credito-obs').value.trim();
@@ -463,11 +475,17 @@ function gerarImagemTalao() {
     let somaTotalValores = 0;
 
     itemRows.forEach(row => {
-        const cod = row.querySelector('.item-codigo').value.trim();
-        const desc = row.querySelector('.item-descricao').value.trim().toUpperCase();
-        const qtd = row.querySelector('.item-quantidade').value.trim();
-        const valorRaw = row.querySelector('.item-valor').value.trim();
-        const motivo = row.querySelector('.item-motivo').value;
+        const codInput = row.querySelector('.item-codigo');
+        const descInput = row.querySelector('.item-descricao');
+        const qtdInput = row.querySelector('.item-quantidade');
+        const valorInput = row.querySelector('.item-valor');
+        const motivoSelect = row.querySelector('.item-motivo');
+
+        const cod = codInput ? codInput.value.trim() : '';
+        const desc = descInput ? descInput.value.trim().toUpperCase() : '';
+        const qtd = qtdInput ? qtdInput.value.trim() : '';
+        const valorRaw = valorInput ? valorInput.value.trim() : '';
+        const motivo = motivoSelect ? motivoSelect.value : '';
 
         if (desc && qtd && motivo) {
             possuiItemValido = true;
@@ -505,7 +523,7 @@ function gerarImagemTalao() {
     const talao = document.getElementById('talao-digital');
     talao.style.display = 'block';
 
-    exibirToast("Gerando imagem do bloco...");
+    exibirToast("Gerando bloco e abrindo WhatsApp...");
 
     html2canvas(talao, { scale: 2 }).then(canvas => {
         const link = document.createElement('a');
@@ -514,6 +532,10 @@ function gerarImagemTalao() {
         link.click();
 
         talao.style.display = 'none';
+
+        if (typeof callbackAposGerar === 'function') {
+            callbackAposGerar();
+        }
         
         setTimeout(() => { limparFormulario('credito'); }, 500);
 
