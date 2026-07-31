@@ -131,16 +131,14 @@ function adicionarItemCredito() {
     div.className = 'dynamic-item-wrapper';
     div.style.cssText = 'background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px;';
     div.innerHTML = `
-        <div class="dynamic-item">
-            <input type="text" class="item-codigo" placeholder="Cód" style="width: 25%;">
-            <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 35%;" required>
-            <input type="text" class="item-valor" placeholder="Valor R$" style="width: 40%;" inputmode="decimal">
+        <div class="dynamic-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" class="item-codigo" placeholder="Cód" style="flex: 1;">
+            <input type="text" class="item-descricao" placeholder="DESCRIÇÃO DO PRODUTO *" style="flex: 3; text-transform: uppercase;" required>
+            <input type="text" class="item-quantidade" placeholder="Qtd *" style="flex: 1;" required>
         </div>
-        <div class="form-group" style="margin-bottom: 8px; margin-top: 8px;">
-            <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="text-transform: uppercase; width: 100%;" required>
-        </div>
-        <div class="form-group" style="margin-bottom: 8px;">
-            <select class="item-motivo" style="width: 100%;" required>
+        <div class="dynamic-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" class="item-valor" placeholder="Valor (R$)" style="flex: 1;" inputmode="decimal">
+            <select class="item-motivo" style="flex: 2;" required>
                 <option value="">Selecione o motivo...</option>
                 <option value="VENCIMENTO">VENCIMENTO</option>
                 <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
@@ -157,7 +155,7 @@ function adicionarItemCredito() {
                 <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
             </select>
         </div>
-        <button type="button" class="btn-clear" onclick="removerElemento(this)" style="width: 100%; padding: 6px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; background-color: #ef4444;">✕ Remover Item</button>
+        <button type="button" class="btn-clear" onclick="removerElemento(this)" style="width: 100%; padding: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; background-color: #ef4444; margin-top: 4px;">✕ Remover Item</button>
     `;
     container.appendChild(div);
 }
@@ -408,16 +406,14 @@ function limparFormulario(tipo) {
 
         document.getElementById('container-itens-credito').innerHTML = `
             <div class="dynamic-item-wrapper" style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px;">
-                <div class="dynamic-item">
-                    <input type="text" class="item-codigo" placeholder="Cód" style="width: 25%;">
-                    <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 35%;" required>
-                    <input type="text" class="item-valor" placeholder="Valor R$" style="width: 40%;" inputmode="decimal">
+                <div class="dynamic-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="text" class="item-codigo" placeholder="Cód" style="flex: 1;">
+                    <input type="text" class="item-descricao" placeholder="DESCRIÇÃO DO PRODUTO *" style="flex: 3; text-transform: uppercase;" required>
+                    <input type="text" class="item-quantidade" placeholder="Qtd *" style="flex: 1;" required>
                 </div>
-                <div class="form-group" style="margin-bottom: 8px; margin-top: 8px;">
-                    <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="text-transform: uppercase; width: 100%;" required>
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <select class="item-motivo" style="width: 100%;" required>
+                <div class="dynamic-item" style="display: flex; gap: 8px;">
+                    <input type="text" class="item-valor" placeholder="Valor (R$)" style="flex: 1;" inputmode="decimal">
+                    <select class="item-motivo" style="flex: 2;" required>
                         <option value="">Selecione o motivo...</option>
                         <option value="VENCIMENTO">VENCIMENTO</option>
                         <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
