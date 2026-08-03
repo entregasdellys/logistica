@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ocorrencias-v5';
+const CACHE_NAME = 'ocorrencias-v5.1';
 const ASSETS = [
   './',
   './index.html',
