@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema de Ocorrências Logística (TESTE ASSINATURA)</title>
+    <link rel="stylesheet" href="teste-style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1b8a3e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Biblioteca Signature Pad para coleta da assinatura -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <link rel="apple-touch-icon" href="logo.png">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</head>
+<body>
+
+    <!-- 1. TELA DE IDENTIFICAÇÃO DO MOTORISTA (LOGIN DIÁRIO) -->
+    <div id="screen-login" class="screen active">
+        <div class="login-card">
+            <div class="login-header">
+                <h2>DELLY'S <span style="font-size: 12px; color: #d97706; vertical-align: middle;">[TESTE]</span></h2>
+                <p>Identificação do Motorista</p>
+            </div>
+            <form id="form-login" onsubmit="salvarIdentificacao(event)">
+                <div class="form-group">
+                    <label for="motorista-nome">Nome do Motorista *</label>
+                    <input type="text" id="motorista-nome" placeholder="Ex: Volnei" required>
+                </div>
+                <div class="form-group">
+                    <label for="motorista-placa">Placa do Veículo *</label>
+                    <input type="text" id="motorista-placa" placeholder="Ex: ABC1D23" style="text-transform: uppercase;" required>
+                </div>
+                <div class="form-group">
+                    <label for="motorista-ajudante">Ajudante(s)</label>
+                    <input type="text" id="motorista-ajudante" placeholder="Ex: Douglas e Samuel (Opcional)">
+                </div>
+                <button type="submit" class="btn-primary">Acessar Sistema ➔</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. TELA PRINCIPAL (OCORRÊNCIAS) -->
+    <div id="screen-main" class="screen">
+        <!-- BARRA SUPERIOR DE PERFIL -->
+        <header class="user-bar">
+            <div class="user-info">
+                <span class="user-badge">🚛 Motorista: <strong id="bar-motorista">-</strong></span>
+                <span class="user-badge">🏷 Placa: <strong id="bar-placa">-</strong></span>
+                <span id="badge-sync-pendente" class="user-badge" style="display: none; background-color: #d97706; color: #ffffff;"></span>
+            </div>
+            <button type="button" class="btn-edit-user" onclick="alterarIdentificacao()">✏️ Alterar</button>
+        </header>
+
+        <div class="main-header">
+            <h2>Ocorrências de Entrega</h2>
+            <p>Selecione o tipo de ocorrência para iniciar</p>
+        </div>
+
+        <!-- SELETOR DE ACIONAMENTOS -->
+        <div class="container">
+            <div class="type-selector">
+                <button type="button" class="tab-btn active" onclick="trocarAba(event, 'retorno')">📦 Retorno</button>
+                <button type="button" class="tab-btn" onclick="trocarAba(event, 'reentrega')">🚚 Reentrega</button>
+                <button type="button" class="tab-btn" onclick="trocarAba(event, 'credito')">💳 Crédito</button>
+            </div>
+
+            <!-- FORMULÁRIO DE RETORNO -->
+            <form id="form-retorno" class="form-section active">
+                <h3>📦 Registro de Retorno</h3>
+                <div class="form-group">
+                    <label for="retorno-cliente">Código do Cliente *</label>
+                    <input type="text" id="retorno-cliente" placeholder="Ex: 12245" inputmode="numeric" pattern="[0-9]*" required>
+                </div>
+
+                <div id="container-nfs-retorno">
+                    <div class="form-group dynamic-row" style="display: flex; gap: 5px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <label>Número da NF *</label>
+                            <input type="text" class="input-nf-retorno" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" onclick="adicionarCampoNfRetorno()">+ Adicionar outra NF</button>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="retorno-motivo">Motivo *</label>
+                    <select id="retorno-motivo" required>
+                        <option value="">Selecione o motivo...</option>
+                        <option value="VENCIMENTO">VENCIMENTO</option>
+                        <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
+                        <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
+                        <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
+                        <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
+                        <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
+                        <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
+                        <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
+                        <option value="PRECO INCORRETO">PRECO INCORRETO</option>
+                        <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
+                        <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
+                        <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
+                        <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
+                    </select>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('retorno')">📲 Enviar pelo WhatsApp</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('retorno', this)">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-clear" onclick="limparFormulario('retorno')">🗑 Limpar Campos</button>
+                </div>
+            </form>
+
+            <!-- FORMULÁRIO DE REENTREGA -->
+            <form id="form-reentrega" class="form-section">
+                <h3>🚚 Registro de Reentrega</h3>
+                <div id="container-nfs-reentrega">
+                    <div class="form-group dynamic-row" style="display: flex; gap: 5px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <label>Número da NF *</label>
+                            <input type="text" class="input-nf-reentrega" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" onclick="adicionarCampoNfReentrega()">+ Adicionar outra NF</button>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="reentrega-motivo">Motivo *</label>
+                    <select id="reentrega-motivo" required>
+                        <option value="">Selecione o motivo...</option>
+                        <option value="VENCIMENTO">VENCIMENTO</option>
+                        <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
+                        <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
+                        <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
+                        <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
+                        <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
+                        <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
+                        <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
+                        <option value="PRECO INCORRETO">PRECO INCORRETO</option>
+                        <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
+                        <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
+                        <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
+                        <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
+                    </select>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('reentrega')">📲 Enviar pelo WhatsApp</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('reentrega', this)">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-clear" onclick="limparFormulario('reentrega')">🗑 Limpar Campos</button>
+                </div>
+            </form>
+
+            <!-- FORMULÁRIO DE CRÉDITO -->
+            <form id="form-credito" class="form-section">
+                <h3>💳 Registro de Crédito</h3>
+                <div class="form-group">
+                    <label for="credito-nf">Número da NF *</label>
+                    <input type="text" id="credito-nf" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required>
+                </div>
+                <div class="form-group">
+                    <label for="credito-cliente">Código do Cliente *</label>
+                    <input type="text" id="credito-cliente" placeholder="Ex: 12245" inputmode="numeric" pattern="[0-9]*" required>
+                </div>
+
+                <div class="section-title">Produtos / Itens</div>
+                <div id="container-itens-credito">
+                    <div class="dynamic-item" style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; align-items: center;">
+                        <input type="text" class="item-codigo" placeholder="Cód" style="width: 20%;">
+                        <input type="text" class="item-descricao" placeholder="Descrição do Produto *" style="width: 50%; text-transform: uppercase;" required>
+                        <input type="text" class="item-quantidade" placeholder="Qtd *" style="width: 23%;" required>
+                        <input type="text" class="item-valor" placeholder="Valor (R$)" style="width: 35%;" inputmode="decimal">
+                        <select class="item-motivo" style="width: 50%; font-size: 13px;" required>
+                            <option value="">Selecione o motivo...</option>
+                            <option value="VENCIMENTO">VENCIMENTO</option>
+                            <option value="SINISTRO/ROUBO">SINISTRO/ROUBO</option>
+                            <option value="CLIENTE CANCELOU/DESISTIU">CLIENTE CANCELOU/DESISTIU</option>
+                            <option value="CLIENTE FECHADO">CLIENTE FECHADO</option>
+                            <option value="PRODUTO DESCONGELADO/AVARIADO">PRODUTO DESCONGELADO/AVARIADO</option>
+                            <option value="FALTA MERCADORIA NA CARGA">FALTA MERCADORIA NA CARGA</option>
+                            <option value="ATRASO NA ENTREGA">ATRASO NA ENTREGA</option>
+                            <option value="CLIENTE NÃO FEZ PEDIDO">CLIENTE NÃO FEZ PEDIDO</option>
+                            <option value="PRECO INCORRETO">PRECO INCORRETO</option>
+                            <option value="FORA DE ROTA/GEOLOCALIZAÇÃO">FORA DE ROTA/GEOLOCALIZAÇÃO</option>
+                            <option value="PRODUTO FORA PADRÃO CLIENTE">PRODUTO FORA PADRÃO CLIENTE</option>
+                            <option value="PEDIDO INCORRETO">PEDIDO INCORRETO</option>
+                            <option value="PEDIDO EM DUPLICIDADE">PEDIDO EM DUPLICIDADE</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" onclick="adicionarItemCredito()">+ Adicionar Item</button>
+
+                <!-- CAMPO DE ASSINATURA NA TELA -->
+                <div class="form-group signature-container" style="margin-top: 15px;">
+                    <label>✍️ Assinatura / Aceite do Cliente *</label>
+                    <div class="canvas-wrapper">
+                        <canvas id="signature-canvas"></canvas>
+                    </div>
+                    <div class="signature-actions">
+                        <button type="button" class="btn-secondary" onclick="limparAssinatura()" style="background-color: #cbd5e1; color: #1e293b; padding: 6px 12px; font-size: 12px;">🧹 Limpar Assinatura</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="credito-obs">Observações</label>
+                    <textarea id="credito-obs" rows="2" placeholder="Observações adicionais (opcional)"></textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn-action btn-whatsapp" onclick="enviarWhatsApp('credito')">📲 Enviar pelo WhatsApp</button>
+                    <button type="button" class="btn-action btn-secondary" onclick="gerarImagemTalao()" style="background-color: #0284c7;">📄 Gerar Bloco de Débito</button>
+                    <button type="button" class="btn-action btn-copy" onclick="copiarMensagem('credito', this)">📋 Copiar Mensagem</button>
+                    <button type="button" class="btn-action btn-clear" onclick="limparFormulario('credito')">🗑 Limpar Campos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODELO VISUAL DO BLOCO DE DÉBITOS DELLY'S (HTML2CANVAS) -->
+    <div id="talao-digital" class="bloco-paper">
+        <div class="bloco-header">
+            <div class="bloco-logo">
+                <h2>DELLY'S</h2>
+                <span>FOOD SERVICE</span>
+            </div>
+            <div class="bloco-title-box">
+                <h1>BLOCO DE DÉBITOS</h1>
+                <div class="bloco-filiais">
+                    <span>FILIAL 7</span>
+                </div>
+            </div>
+            <div class="bloco-empresa-num">
+                <div class="empresa-nome">OESA COMÉRCIO E REPRESENTAÇÕES S/A</div>
+                <div class="bloco-num-destaque">Nº <span id="t-num-talao">CR-00000000</span></div>
+            </div>
+        </div>
+
+        <div class="bloco-section-header">DADOS DA DEVOLUÇÃO</div>
+        <div class="bloco-grid-rows">
+            <div class="grid-row">
+                <span><strong>Refaturamento:</strong> ( )</span>
+                <span><strong>Crédito:</strong> ( X )</span>
+                <span><strong>Retorno NF:</strong> ( )</span>
+                <span><strong>Data:</strong> <span id="t-data"></span></span>
+                <span><strong>Nº da NF:</strong> <span id="t-nf"></span></span>
+            </div>
+            <div class="grid-row">
+                <span><strong>Motorista:</strong> <span id="t-motorista"></span></span>
+                <span><strong>Ajudante:</strong> <span id="t-ajudante"></span></span>
+            </div>
+            <div class="grid-row">
+                <span><strong>Placa:</strong> <span id="t-placa"></span></span>
+                <span><strong>Representante:</strong> ( )</span>
+                <span><strong>Cliente:</strong> (<span id="t-cliente"></span>)</span>
+            </div>
+        </div>
+
+        <div class="bloco-section-header center">PRODUTOS</div>
+        <table class="bloco-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">CÓDIGO</th>
+                    <th style="width: 35%;">DESCRIÇÃO</th>
+                    <th style="width: 12%;">QUANTIDADE</th>
+                    <th style="width: 15%;">VALOR</th>
+                    <th style="width: 23%;">MOTIVO DEVOLUÇÃO</th>
+                </tr>
+            </thead>
+            <tbody id="t-itens-body"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: bold; padding: 4px 8px;">VALOR TOTAL:</td>
+                    <td id="t-valor-total" style="text-align: right; font-weight: bold; padding: 4px 8px;">R$ 0,00</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="bloco-footer">
+            <div class="bloco-obs">
+                <strong>OBS:</strong> <span id="t-obs"></span>
+            </div>
+            
+            <!-- CAIXA DE ASSINATURA RENDERIZADA NA IMAGEM -->
+            <div class="bloco-signature-container" style="margin-top: 15px; text-align: center;">
+                <img id="t-signature-img" src="" alt="Assinatura do Cliente" style="display: none; max-height: 70px; margin: 0 auto;">
+                <div style="border-top: 1px dashed #000; margin-top: 5px; padding-top: 2px; font-size: 11px; font-weight: bold;">
+                    ASSINATURA / ACEITE DO CLIENTE
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST DE NOTIFICAÇÃO -->
+    <div id="toast" class="toast"></div>
+
+    <script src="db.js"></script>
+    <script src="teste-script.js"></script>
+</body>
+</html>
