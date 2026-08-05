@@ -532,3 +532,26 @@ function exibirToast(mensagem) {
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
+
+// Adicione essa função para escutar a digitação do código do produto
+document.addEventListener('input', async (e) => {
+    if (e.target && e.target.classList.contains('item-codigo')) {
+        const codigoDigitado = e.target.value.trim();
+        
+        // Quando o motorista digitar ao menos 2 dígitos
+        if (codigoDigitado.length >= 2) {
+            const produtoEncontrado = await buscarProdutoLocal(codigoDigitado);
+            
+            if (produtoEncontrado) {
+                // Localiza a linha do item correspondente e preenche a descrição automaticamente
+                const linhaItem = e.target.closest('.dynamic-item');
+                if (linhaItem) {
+                    const campoDescricao = linhaItem.querySelector('.item-descricao');
+                    if (campoDescricao) {
+                        campoDescricao.value = produtoEncontrado.descricao;
+                    }
+                }
+            }
+        }
+    }
+});
