@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestão de Manutenção de Frota Pro</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f1f5f9; color: #0f172a; }
+
+    /* LOGIN */
+    .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0f172a; }
+    .login-card { background: white; padding: 2.5rem; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .login-card h2 { text-align: center; margin-bottom: 0.5rem; color: #0f172a; }
+    .login-card p { text-align: center; font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem; }
+
+    /* LAYOUT BASE */
+    #app { display: none; min-height: 100vh; flex-direction: row; }
+    .sidebar { width: 260px; background: #0f172a; color: white; padding: 1.5rem 1rem; display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar h2 { font-size: 1.1rem; margin-bottom: 2rem; color: #38bdf8; text-align: center; font-weight: 700; letter-spacing: 0.5px; }
+    .menu-item { padding: 0.8rem 1rem; color: #94a3b8; text-decoration: none; border-radius: 6px; margin-bottom: 0.4rem; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: all 0.2s; }
+    .menu-item:hover, .menu-item.active { background: #1e293b; color: #ffffff; }
+    .user-info { margin-top: auto; padding-top: 1rem; border-top: 1px solid #334155; font-size: 0.85rem; color: #94a3b8; }
+
+    .content { flex: 1; padding: 2rem; overflow-y: auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.8rem; }
+    .header h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; }
+
+    /* CAMPOS E BOTÕES */
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; color: #475569; text-transform: uppercase; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #2563eb; }
+    .input-uppercase { text-transform: uppercase; }
+    .error-msg { color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem; display: none; font-weight: 600; }
+    
+    .btn-primary { padding: 0.65rem 1.2rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-secondary { background: #64748b; }
+    .btn-secondary:hover { background: #475569; }
+
+    /* TABELAS E CARDS */
+    .tab-screen { display: none; }
+    .tab-screen.active { display: block !important; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
+    .card { background: white; padding: 1.2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #2563eb; }
+    .card h3 { font-size: 0.8rem; color: #64748b; text-transform: uppercase; margin-bottom: 0.4rem; }
+    .card .value { font-size: 1.6rem; font-weight: bold; color: #0f172a; }
+
+    .table-container { background: white; padding: 1.2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 0.75rem 0.5rem; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; }
+    th { background: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; white-space: nowrap; }
+    tbody tr.row-clickable { cursor: pointer; user-select: none; }
+    tbody tr.row-clickable:hover { background-color: #f8fafc; }
+
+    /* BADGES DE STATUS */
+    .badge { padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+    .badge-DISPONIVEL, .badge-ATIVO, .badge-FINALIZADO, .badge-PAGO { background: #dcfce7; color: #166534; }
+    .badge-EM_MANUTENCAO, .badge-EM_ANDAMENTO, .badge-PENDENTE { background: #fef3c7; color: #92400e; }
+    .badge-ABERTA, .badge-INATIVO { background: #fee2e2; color: #991b1b; }
+    .badge-SMARTSHARE { background: #ffedd5; color: #c2410c; }
+    .badge-CONCLUIDA { background: #e0e7ff; color: #3730a3; }
+
+    /* MODAL */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
+    .modal-content { background: white; padding: 1.8rem; border-radius: 8px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+
+    /* NOTIFICAÇÃO DE SYNC */
+    #sync-status { display: none; background: #e0f2fe; color: #0369a1; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; margin-bottom: 1rem; align-items: center; gap: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- TELA DE LOGIN -->
+  <div id="login-screen" class="login-wrapper">
+    <div class="login-card">
+      <h2>🛠️ Gestão de Manutenção</h2>
+      <p>Acesse o painel do sistema de frota</p>
+      <form onsubmit="fazerLogin(event)">
+        <div class="form-group"><label>E-mail</label><input type="email" id="login-email" required></div>
+        <div class="form-group"><label>Senha</label><input type="password" id="login-senha" required></div>
+        <button type="submit" class="btn-primary" style="width: 100%;" id="btn-login">Entrar no Sistema</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APLICAÇÃO PRINCIPAL -->
+  <div id="app">
+    <div class="sidebar">
+      <h2>🛠️ MANUTENÇÃO PRO</h2>
+      <a class="menu-item active" id="m-dash" onclick="navegar('dashboard')">📊 Dashboard</a>
+      <a class="menu-item" id="m-veic" onclick="navegar('veiculos')">🚚 Veículos</a>
+      <a class="menu-item" id="m-planos" onclick="navegar('planos')">📅 Planos Preventivos</a>
+      <a class="menu-item" id="m-os" onclick="navegar('os')">📝 Ordens de Serviço</a>
+      <a class="menu-item" id="m-oficinas" onclick="navegar('oficinas')">🏢 Oficinas / Parceiros</a>
+      
+      <div class="user-info">
+        <p><strong>Usuário:</strong> <span id="user-display">-</span></p>
+        <br>
+        <a style="color: #f87171; cursor: pointer; text-decoration: underline;" onclick="logout()">Sair do Sistema</a>
+      </div>
+    </div>
+
+    <div class="content">
+      
+      <!-- DASHBOARD -->
+      <div id="screen-dashboard" class="tab-screen active">
+        <div class="header"><h1>Visão Geral da Frota</h1></div>
+        <div class="cards-grid">
+          <div class="card"><h3>Veículos Cadastrados</h3><div class="value" id="c-total">0</div></div>
+          <div class="card" style="border-left-color: #d97706;"><h3>Em Manutenção</h3><div class="value" id="c-manu">0</div></div>
+          <div class="card" style="border-left-color: #ef4444;"><h3>OS Registradas</h3><div class="value" id="c-os">0</div></div>
+          <div class="card" style="border-left-color: #16a34a;"><h3>Custo Total Manutenção</h3><div class="value" id="c-custo">R$ 0,00</div></div>
+        </div>
+      </div>
+
+      <!-- VEÍCULOS -->
+      <div id="screen-veiculos" class="tab-screen">
+        <div class="header">
+          <h1>Frota de Veículos</h1>
+          <button class="btn-primary" onclick="novoVeiculoModal()">+ Cadastrar Veículo</button>
+        </div>
+        <div class="table-container">
+          <small style="color: #64748b; margin-bottom: 8px; display: block;">💡 Dica: Dê dois cliques em qualquer veículo da lista para editar os dados ou inativá-lo.</small>
+          <table>
+            <thead><tr><th>Frota</th><th>Placa</th><th>RENAVAM</th><th>Modelo</th><th>Marca</th><th>KM Atual</th><th>Status</th></tr></thead>
+            <tbody id="tb-veiculos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PLANOS PREVENTIVOS -->
+      <div id="screen-planos" class="tab-screen">
+        <div class="header">
+          <h1>Planos de Manutenção Preventiva</h1>
+          <button class="btn-primary" onclick="abrirModal('modal-plano')">+ Criar Plano</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Nome do Plano</th><th>Intervalo KM</th><th>Intervalo Dias</th><th>Descrição</th></tr></thead>
+            <tbody id="tb-planos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ORDENS DE SERVIÇO -->
+      <div id="screen-os" class="tab-screen">
+        <div class="header">
+          <h1>Ordens de Serviço (Planilha)</h1>
+          <button class="btn-primary btn-secondary" onclick="sincronizarComGoogleSheets(true)">🔄 Atualizar Planilha</button>
+        </div>
+        
+        <div id="sync-status">🔄 Sincronizando dados com o Google Apps Script...</div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>NÚMERO</th>
+                <th>DATA</th>
+                <th>PLACA</th>
+                <th>MOTORISTA</th>
+                <th>KM</th>
+                <th>TIPO</th>
+                <th>PROBLEMA</th>
+                <th>STATUS</th>
+                <th>RESP</th>
+                <th>OBS</th>
+                <th>CONCLUSÃO</th>
+                <th style="background: #e0f2fe; color: #0369a1;">CUSTO MANUTENÇÃO</th>
+                <th>AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody id="tb-os"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- OFICINAS -->
+      <div id="screen-oficinas" class="tab-screen">
+        <div class="header">
+          <h1>Oficinas e Fornecedores</h1>
+          <button class="btn-primary" onclick="abrirModal('modal-oficina')">+ Cadastrar Oficina</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Nome / Razão Social</th><th>Telefone</th><th>Cidade</th><th>Especialidade</th></tr></thead>
+            <tbody id="tb-oficinas"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL VEÍCULO -->
+  <div id="modal-veiculo" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="modal-veiculo-titulo">Novo Veículo</h3></div>
+      <form id="form-veiculo" onsubmit="salvarVeiculo(event)">
+        <input type="hidden" id="v-id">
+        <div class="form-group">
+          <label>Nº Frota (Gerado Automático)</label>
+          <input type="text" id="v-frota" readonly style="background-color: #f1f5f9; font-weight: bold;">
+        </div>
+        <div class="form-group">
+          <label>Placa</label>
+          <input type="text" id="v-placa" class="input-uppercase" placeholder="ABC-1234 ou ABC1D23" oninput="aplicarMascaraPlaca(this); validarDuplicidadeCampos();" maxlength="8" required>
+          <span id="err-placa" class="error-msg">❌ Esta placa já está cadastrada!</span>
+        </div>
+        <div class="form-group">
+          <label>RENAVAM</label>
+          <input type="text" id="v-renavam" class="input-uppercase" oninput="this.value = this.value.toUpperCase(); validarDuplicidadeCampos();">
+          <span id="err-renavam" class="error-msg">❌ Este RENAVAM já está cadastrado!</span>
+        </div>
+        <div class="form-group"><label>Marca</label><input type="text" id="v-marca" class="input-uppercase" oninput="this.value = this.value.toUpperCase()" required></div>
+        <div class="form-group"><label>Modelo</label><input type="text" id="v-modelo" class="input-uppercase" oninput="this.value = this.value.toUpperCase()" required></div>
+        <div class="form-group"><label>KM Atual (Opcional)</label><input type="number" id="v-km" placeholder="0"></div>
+        <div class="form-group" id="group-v-status" style="display: none;">
+          <label>Status do Veículo</label>
+          <select id="v-status">
+            <option value="DISPONIVEL">DISPONÍVEL</option>
+            <option value="EM_MANUTENCAO">EM MANUTENÇÃO</option>
+            <option value="INATIVO">INATIVO</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;" id="btn-save-v">Salvar Veículo</button>
+        <button type="button" class="btn-primary btn-secondary" style="width: 100%; margin-top:5px;" onclick="fecharModal('modal-veiculo')">Cancelar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PLANO PREVENTIVO -->
+  <div id="modal-plano" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Novo Plano Preventivo</h3></div>
+      <form id="form-plano" onsubmit="salvarPlano(event)">
+        <div class="form-group"><label>Nome do Plano (Ex: Troca de Óleo)</label><input type="text" id="pl-nome" required></div>
+        <div class="form-group"><label>A cada quantos KM?</label><input type="number" id="pl-km" placeholder="Ex: 10000"></div>
+        <div class="form-group"><label>A cada quantos Dias?</label><input type="number" id="pl-dias" placeholder="Ex: 180"></div>
+        <div class="form-group"><label>Descrição dos Serviços</label><textarea id="pl-desc"></textarea></div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Salvar Plano</button>
+        <button type="button" class="btn-primary btn-secondary" style="width: 100%; margin-top:5px;" onclick="fecharModal('modal-plano')">Cancelar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PREENCHER CUSTO DA MANUTENÇÃO -->
+  <div id="modal-custo" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Informar Custo da Manutenção</h3></div>
+      <form id="form-custo" onsubmit="salvarCustoOS(event)">
+        <input type="hidden" id="custo-os-id">
+        <input type="hidden" id="custo-veiculo-id">
+        <div class="form-group"><label>Custo da Manutenção (R$)</label><input type="number" step="0.01" id="edit-custo" value="0.00" required></div>
+        <div class="form-group"><label>Conclusão / Observação Técnica</label><textarea id="edit-conclusao"></textarea></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="edit-status">
+            <option value="PENDENTE">PENDENTE</option>
+            <option value="PAGO">PAGO</option>
+            <option value="SMARTSHARE">SMARTSHARE</option>
+            <option value="FINALIZADO">FINALIZADO</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Salvar Custo</button>
+        <button type="button" class="btn-primary btn-secondary" style="width: 100%; margin-top:5px;" onclick="fecharModal('modal-custo')">Cancelar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL OFICINA -->
+  <div id="modal-oficina" class="modal">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Cadastrar Oficina / Parceiro</h3></div>
+      <form id="form-oficina" onsubmit="salvarOficina(event)">
+        <div class="form-group"><label>Nome / Razão Social</label><input type="text" id="of-nome" required></div>
+        <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="of-tel"></div>
+        <div class="form-group"><label>Cidade / UF</label><input type="text" id="of-cidade"></div>
+        <div class="form-group"><label>Especialidade (Ex: Suspensão, Elétrica, Motor)</label><input type="text" id="of-esp"></div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Salvar Oficina</button>
+        <button type="button" class="btn-primary btn-secondary" style="width: 100%; margin-top:5px;" onclick="fecharModal('modal-oficina')">Cancelar</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://lfflpfyzhokprxldcnyq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_k9CO7TwVT6-mJLWzKd-9OQ_xehgsG1w';
+    
+    const URL_SCRIPT_GOOGLE = 'https://script.google.com/macros/s/AKfycbyUE0CNezRlM0rfYQdDgxn-HUmmnkJJWM6Xz_RiQJ615AHtGI5Hhz9XAJAePhW6sKIOtQ/exec';
+
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let veiculos = [], planos = [], osList = [], oficinas = [];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) {
+        iniciarAplicacao(session.user.email);
+      }
+    });
+
+    function aplicarMascaraPlaca(input) {
+      let val = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (val.length > 7) val = val.substring(0, 7);
+      if (/^[A-Z]{3}\d{4}$/.test(val)) {
+        input.value = val.substring(0, 3) + '-' + val.substring(3);
+      } else {
+        input.value = val;
+      }
+    }
+
+    function validarDuplicidadeCampos() {
+      const currentId = document.getElementById('v-id').value;
+      const placaInput = document.getElementById('v-placa').value.trim().toUpperCase();
+      const renavamInput = document.getElementById('v-renavam').value.trim().toUpperCase();
+
+      const errPlaca = document.getElementById('err-placa');
+      const errRenavam = document.getElementById('err-renavam');
+      const btnSave = document.getElementById('btn-save-v');
+
+      const placaExiste = veiculos.some(v => v.placa === placaInput && v.id !== currentId);
+      const renavamExiste = renavamInput !== '' && veiculos.some(v => v.renavam === renavamInput && v.id !== currentId);
+
+      let invalido = false;
+
+      if (placaExiste) { errPlaca.style.display = 'block'; invalido = true; } else { errPlaca.style.display = 'none'; }
+      if (renavamExiste) { errRenavam.style.display = 'block'; invalido = true; } else { errRenavam.style.display = 'none'; }
+
+      btnSave.disabled = invalido;
+      return !invalido;
+    }
+
+    async function fazerLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-senha').value;
+      const btn = document.getElementById('btn-login');
+
+      btn.innerText = 'Autenticando...';
+      btn.disabled = true;
+
+      const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+      btn.innerText = 'Entrar no Sistema';
+      btn.disabled = false;
+
+      if (error) {
+        alert('Erro ao realizar login: ' + error.message);
+      } else {
+        iniciarAplicacao(data.user.email);
+      }
+    }
+
+    function iniciarAplicacao(email) {
+      document.getElementById('user-display').innerText = email;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      carregarTudo();
+    }
+
+    async function logout() {
+      await _supabase.auth.signOut();
+      location.reload();
+    }
+
+    async function navegar(tela) {
+      const telas = ['dashboard', 'veiculos', 'planos', 'os', 'oficinas'];
+      const menuIds = { 'dashboard': 'm-dash', 'veiculos': 'm-veic', 'planos': 'm-planos', 'os': 'm-os', 'oficinas': 'm-oficinas' };
+
+      telas.forEach(t => {
+        const el = document.getElementById('screen-' + t);
+        const menuEl = document.getElementById(menuIds[t]);
+        
+        if (t === tela) {
+          el.classList.add('active');
+          if (menuEl) menuEl.classList.add('active');
+        } else {
+          el.classList.remove('active');
+          if (menuEl) menuEl.classList.remove('active');
+        }
+      });
+
+      if (tela === 'os') {
+        await sincronizarComGoogleSheets();
+      }
+    }
+
+    function formatarDataISO(dataStr) {
+      if (!dataStr) return new Date().toISOString().split('T')[0];
+      if (dataStr.includes('/')) {
+        const partes = dataStr.split('/');
+        if (partes.length === 3) {
+          return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+        }
+      }
+      return dataStr;
+    }
+
+    async function sincronizarComGoogleSheets(manual = false) {
+      if (!URL_SCRIPT_GOOGLE || URL_SCRIPT_GOOGLE.includes('SEU_LINK')) {
+        if (manual) alert('Por favor, configure a URL do seu Google Apps Script na variável URL_SCRIPT_GOOGLE.');
+        return;
+      }
+
+      const syncEl = document.getElementById('sync-status');
+      syncEl.style.display = 'flex';
+
+      try {
+        await carregarTudo(); // Atualiza cache local de veículos e OS
+        const res = await fetch(URL_SCRIPT_GOOGLE);
+        const dadosPlanilha = await res.json();
+
+        let novosRegistros = 0;
+
+        for (let item of dadosPlanilha) {
+          const numInfo = String(item['NÚMERO'] || item['NUMERO'] || item['OS'] || '').trim();
+          const dataRaw = String(item['DATA'] || '').trim();
+          const dataInfo = formatarDataISO(dataRaw);
+          const placaRaw = String(item['PLACA'] || '').toUpperCase().trim();
+          const placaInfo = placaRaw.replace(/[^A-Z0-9]/g, '');
+          const motoristaInfo = String(item['MOTORISTA'] || '').trim();
+          const kmInfo = Number(String(item['KM'] || '').replace(/[^0-9]/g, '')) || 0;
+          const tipoInfo = String(item['TIPO'] || 'MECÂNICO').toUpperCase().trim();
+          const problemaInfo = String(item['PROBLEMA'] || '').trim();
+          const statusInfo = String(item['STATUS'] || 'PENDENTE').toUpperCase().trim();
+          const respInfo = String(item['RESP'] || item['RESPONSAVEL'] || '').trim();
+          const obsInfo = String(item['OBS'] || item['OBSERVACAO'] || '').trim();
+          const conclusaoInfo = String(item['CONCLUSÃO'] || item['CONCLUSAO'] || '').trim();
+
+          if (!numInfo && !placaInfo) continue;
+
+          let veic = veiculos.find(v => v.placa && v.placa.replace(/[^A-Z0-9]/g, '') === placaInfo);
+
+          if (!veic && placaRaw) {
+            const proximoNumero = veiculos.length + 1;
+            const newFrota = 'F-' + String(proximoNumero).padStart(3, '0');
+            const { data: newV, error: errV } = await _supabase.from('veiculos').insert([{
+              numero_frota: newFrota,
+              placa: placaRaw,
+              marca: 'GERAL',
+              modelo: 'FROTA',
+              km_atual: kmInfo,
+              status: 'DISPONIVEL'
+            }]).select();
+
+            if (newV && newV[0]) {
+              veic = newV[0];
+              veiculos.push(veic);
+            } else if (errV) {
+              console.error("Erro ao cadastrar veículo automático:", errV);
+            }
+          }
+
+          if (veic) {
+            const jaExiste = osList.some(o => 
+              (numInfo && String(o.numero_os).trim() === numInfo) || 
+              (o.veiculo_id === veic.id && o.descricao === problemaInfo && o.data_abertura === dataInfo)
+            );
+
+            if (!jaExiste) {
+              const payload = {
+                numero_os: numInfo || null,
+                data_abertura: dataInfo,
+                veiculo_id: veic.id,
+                motorista: motoristaInfo || null,
+                km_entrada: kmInfo || veic.km_atual || 0,
+                tipo_manutencao: tipoInfo || 'MECÂNICO',
+                descricao: problemaInfo || 'Sem descrição',
+                status: statusInfo || 'PENDENTE',
+                responsavel: respInfo || null,
+                observacao: obsInfo || null,
+                data_conclusao: conclusaoInfo || null,
+                custo_mao_obra: 0,
+                custo_pecas: 0
+              };
+
+              const { error: errOS } = await _supabase.from('ordens_servico_cobli').insert([payload]);
+              if (!errOS) {
+                novosRegistros++;
+              } else {
+                console.error("Erro ao inserir OS:", errOS, payload);
+              }
+            }
+          }
+        }
+
+        await carregarTudo();
+        if (manual) alert(`Sincronização concluída! ${novosRegistros} novas Ordens de Serviço foram inseridas.`);
+      } catch (err) {
+        console.error("Erro ao sincronizar via Apps Script:", err);
+        if (manual) alert('Erro na sincronização:\n\n' + err.message);
+      } finally {
+        syncEl.style.display = 'none';
+      }
+    }
+
+    async function carregarTudo() {
+      try {
+        const { data: v } = await _supabase.from('veiculos').select('*').order('created_at', { ascending: true }); 
+        veiculos = v || [];
+        
+        const { data: pl } = await _supabase.from('planos_preventiva').select('*'); 
+        planos = pl || [];
+        
+        const { data: o } = await _supabase.from('ordens_servico_cobli').select('*, veiculos(numero_frota, placa), oficinas(nome)').order('created_at', { ascending: false }); 
+        osList = o || [];
+        
+        const { data: ofi } = await _supabase.from('oficinas').select('*'); 
+        oficinas = ofi || [];
+
+        document.getElementById('c-total').innerText = veiculos.filter(x => x.status !== 'INATIVO').length;
+        document.getElementById('c-manu').innerText = veiculos.filter(x => x.status === 'EM_MANUTENCAO').length;
+        document.getElementById('c-os').innerText = osList.length;
+        
+        const custoTotal = osList.reduce((acc, curr) => acc + (Number(curr.custo_mao_obra || 0) + Number(curr.custo_pecas || 0)), 0);
+        document.getElementById('c-custo').innerText = 'R$ ' + custoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+        document.getElementById('tb-veiculos').innerHTML = veiculos.map(x => `
+          <tr class="row-clickable" ondblclick="editarVeiculo('${x.id}')">
+            <td><strong>${x.numero_frota}</strong></td>
+            <td>${x.placa}</td>
+            <td>${x.renavam || '-'}</td>
+            <td>${x.modelo}</td>
+            <td>${x.marca}</td>
+            <td>${x.km_atual} km</td>
+            <td><span class="badge badge-${x.status}">${x.status}</span></td>
+          </tr>
+        `).join('');
+
+        document.getElementById('tb-planos').innerHTML = planos.map(x => `<tr><td><strong>${x.nome}</strong></td><td>${x.intervalo_km ? x.intervalo_km + ' km' : '-'}</td><td>${x.intervalo_dias ? x.intervalo_dias + ' dias' : '-'}</td><td>${x.descricao || '-'}</td></tr>`).join('');
+        document.getElementById('tb-oficinas').innerHTML = oficinas.map(x => `<tr><td><strong>${x.nome}</strong></td><td>${x.telefone || '-'}</td><td>${x.cidade || '-'}</td><td>${x.especialidade || '-'}</td></tr>`).join('');
+        
+        document.getElementById('tb-os').innerHTML = osList.map(x => {
+          const valorTotal = Number(x.custo_mao_obra || 0) + Number(x.custo_pecas || 0);
+          const numOS = x.numero_os || '#' + String(x.id).substring(0,6);
+          const dtAbertura = x.data_abertura ? x.data_abertura : '-';
+          
+          return `<tr>
+            <td><strong>${numOS}</strong></td>
+            <td>${dtAbertura}</td>
+            <td>${x.veiculos?.placa || '-'}</td>
+            <td>${x.motorista || '-'}</td>
+            <td>${x.km_entrada || '-'}</td>
+            <td>${x.tipo_manutencao || '-'}</td>
+            <td><strong>${x.descricao || '-'}</strong></td>
+            <td><span class="badge badge-${x.status}">${x.status || 'PENDENTE'}</span></td>
+            <td>${x.responsavel || x.oficinas?.nome || '-'}</td>
+            <td>${x.observacao || '-'}</td>
+            <td>${x.data_conclusao || '-'}</td>
+            <td style="background-color: #f0f9ff; font-weight: bold; color: #0369a1;">R$ ${valorTotal.toFixed(2)}</td>
+            <td>
+              <button class="btn-primary" style="padding: 0.2rem 0.6rem; font-size:0.75rem;" onclick="abrirModalCusto('${x.id}', '${x.veiculo_id}', ${valorTotal}, '${x.status}', '${x.data_conclusao || ''}')">💵 Lançar Custo</button>
+            </td>
+          </tr>`;
+        }).join('');
+
+      } catch (err) {
+        console.error("Erro ao carregar dados do Supabase:", err);
+      }
+    }
+
+    function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function novoVeiculoModal() {
+      document.getElementById('form-veiculo').reset();
+      document.getElementById('v-id').value = '';
+      document.getElementById('modal-veiculo-titulo').innerText = 'Novo Veículo';
+      document.getElementById('group-v-status').style.display = 'none';
+      document.getElementById('err-placa').style.display = 'none';
+      document.getElementById('err-renavam').style.display = 'none';
+      document.getElementById('btn-save-v').disabled = false;
+
+      const proximoNumero = veiculos.length + 1;
+      document.getElementById('v-frota').value = 'F-' + String(proximoNumero).padStart(3, '0');
+
+      abrirModal('modal-veiculo');
+    }
+
+    function editarVeiculo(id) {
+      const v = veiculos.find(item => item.id === id);
+      if (!v) return;
+
+      document.getElementById('v-id').value = v.id;
+      document.getElementById('modal-veiculo-titulo').innerText = 'Editar Veículo - ' + v.numero_frota;
+      document.getElementById('v-frota').value = v.numero_frota;
+      document.getElementById('v-placa').value = v.placa || '';
+      document.getElementById('v-renavam').value = v.renavam || '';
+      document.getElementById('v-marca').value = v.marca || '';
+      document.getElementById('v-modelo').value = v.modelo || '';
+      document.getElementById('v-km').value = v.km_atual || 0;
+      
+      document.getElementById('v-status').value = v.status;
+      document.getElementById('group-v-status').style.display = 'block';
+
+      document.getElementById('err-placa').style.display = 'none';
+      document.getElementById('err-renavam').style.display = 'none';
+      document.getElementById('btn-save-v').disabled = false;
+
+      abrirModal('modal-veiculo');
+    }
+
+    async function salvarVeiculo(e) {
+      e.preventDefault();
+
+      if (!validarDuplicidadeCampos()) {
+        alert('Por favor, corrija os campos duplicados antes de salvar.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-save-v');
+      btn.innerText = 'Salvando...'; btn.disabled = true;
+
+      const vId = document.getElementById('v-id').value;
+      const kmInformado = document.getElementById('v-km').value;
+
+      const payload = {
+        numero_frota: document.getElementById('v-frota').value,
+        placa: document.getElementById('v-placa').value.toUpperCase(),
+        renavam: document.getElementById('v-renavam').value.toUpperCase() || null,
+        marca: document.getElementById('v-marca').value.toUpperCase(),
+        modelo: document.getElementById('v-modelo').value.toUpperCase(),
+        km_atual: kmInformado !== '' ? Number(kmInformado) : 0
+      };
+
+      let response;
+
+      if (vId) {
+        payload.status = document.getElementById('v-status').value;
+        response = await _supabase.from('veiculos').update(payload).eq('id', vId);
+      } else {
+        payload.status = 'DISPONIVEL';
+        response = await _supabase.from('veiculos').insert([payload]);
+      }
+
+      btn.innerText = 'Salvar Veículo'; btn.disabled = false;
+
+      if (response.error) {
+        alert('Erro ao salvar veículo: ' + response.error.message);
+      } else {
+        document.getElementById('form-veiculo').reset();
+        fecharModal('modal-veiculo');
+        carregarTudo();
+      }
+    }
+
+    async function salvarPlano(e) {
+      e.preventDefault();
+      const payload = {
+        nome: document.getElementById('pl-nome').value,
+        intervalo_km: Number(document.getElementById('pl-km').value) || null,
+        intervalo_dias: Number(document.getElementById('pl-dias').value) || null,
+        descricao: document.getElementById('pl-desc').value
+      };
+
+      const { error } = await _supabase.from('planos_preventiva').insert([payload]);
+      if (error) alert('Erro ao criar plano: ' + error.message);
+      else {
+        document.getElementById('form-plano').reset();
+        fecharModal('modal-plano');
+        carregarTudo();
+      }
+    }
+
+    async function salvarOficina(e) {
+      e.preventDefault();
+      const payload = {
+        nome: document.getElementById('of-nome').value,
+        telefone: document.getElementById('of-tel').value,
+        cidade: document.getElementById('of-cidade').value,
+        especialidade: document.getElementById('of-esp').value
+      };
+
+      const { error } = await _supabase.from('oficinas').insert([payload]);
+      if (error) alert('Erro ao cadastrar oficina: ' + error.message);
+      else {
+        document.getElementById('form-oficina').reset();
+        fecharModal('modal-oficina');
+        carregarTudo();
+      }
+    }
+
+    function abrirModalCusto(osId, veiculoId, custoAtual, statusAtual, conclusaoAtual) {
+      document.getElementById('custo-os-id').value = osId;
+      document.getElementById('custo-veiculo-id').value = veiculoId;
+      document.getElementById('edit-custo').value = custoAtual || 0;
+      document.getElementById('edit-status').value = statusAtual || 'FINALIZADO';
+      document.getElementById('edit-conclusao').value = conclusaoAtual || '';
+      
+      abrirModal('modal-custo');
+    }
+
+    async function salvarCustoOS(e) {
+      e.preventDefault();
+      const osId = document.getElementById('custo-os-id').value;
+      const veiculoId = document.getElementById('custo-veiculo-id').value;
+      const novoStatus = document.getElementById('edit-status').value;
+
+      const payload = {
+        custo_mao_obra: Number(document.getElementById('edit-custo').value),
+        custo_pecas: 0,
+        status: novoStatus,
+        data_conclusao: document.getElementById('edit-conclusao').value
+      };
+
+      const { error } = await _supabase.from('ordens_servico_cobli').update(payload).eq('id', osId);
+      if (error) {
+        alert('Erro ao atualizar custo da OS: ' + error.message);
+      } else {
+        if (novoStatus === 'PAGO' || novoStatus === 'FINALIZADO' || novoStatus === 'CONCLUIDA') {
+          await _supabase.from('veiculos').update({ status: 'DISPONIVEL' }).eq('id', veiculoId);
+        }
+        fecharModal('modal-custo');
+        carregarTudo();
+      }
+    }
+  </script>
+</body>
+</html>
