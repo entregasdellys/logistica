@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Caixas por Caminhão</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Controle de Caixas</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome Icons -->
@@ -13,115 +13,161 @@
     <!-- Leitor de QR Code HTML5 -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card-custom { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .badge-status { font-size: 0.9rem; padding: 0.5em 0.8em; border-radius: 8px; }
-        .stat-box { background: #eef2f7; border-radius: 10px; padding: 15px; text-align: center; }
-        .stat-number { font-size: 2rem; font-weight: bold; color: #0d6efd; }
+        html, body {
+            height: 100vh;
+            overflow-x: hidden;
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .card-compact {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .stat-box {
+            background: #eef2f7;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #0d6efd;
+            line-height: 1.2;
+        }
+        .badge-status {
+            font-size: 0.75rem;
+            padding: 0.4em 0.6em;
+            border-radius: 6px;
+        }
+        .table-compact th, .table-compact td {
+            padding: 4px 6px;
+            font-size: 0.8rem;
+        }
         #reader { width: 100%; border-radius: 8px; overflow: hidden; }
     </style>
 </head>
-<body class="pb-5">
+<body>
 
-    <nav class="navbar navbar-dark bg-primary mb-4 shadow-sm">
-        <div class="container">
-            <span class="navbar-brand mb-0 h1">
-                <i class="fa-solid fa-truck-ramp-box me-2"></i>Controle de Caixas
+    <div class="main-container">
+        
+        <!-- Cabeçalho Ultra Compacto -->
+        <div class="d-flex justify-content-between align-items-center mb-1 px-1">
+            <span class="fw-bold text-primary fs-6">
+                <i class="fa-solid fa-truck-ramp-box me-1"></i>Controle de Caixas
+            </span>
+            <span id="qrInfo" class="badge bg-success d-none">
+                <i class="fa-solid fa-qrcode me-1"></i>QR Lido
             </span>
         </div>
-    </nav>
 
-    <div class="container" style="max-width: 650px;">
-        
-        <!-- Seleção de Veículo / Leitor QR Code -->
-        <div class="card card-custom p-3 mb-3">
-            <label class="form-label fw-bold"><i class="fa-solid fa-truck me-2"></i>Placa do Caminhão</label>
-            <div class="input-group mb-2">
-                <select id="selectPlaca" class="form-select form-select-lg">
-                    <option value="">Carregando caminhões...</option>
-                </select>
-                <button class="btn btn-outline-secondary" type="button" id="btnAtualizar" title="Atualizar dados">
-                    <i class="fa-solid fa-rotate"></i>
-                </button>
-            </div>
-
-            <!-- Botão para acionar a câmera e ler QR Code -->
-            <button class="btn btn-dark btn-lg w-100 fw-bold" type="button" data-bs-toggle="modal" data-bs-target="#modalQrCode" onclick="iniciarLeitor()">
-                <i class="fa-solid fa-qrcode me-2"></i>Escanear QR Code com a Câmera
-            </button>
-
-            <div id="qrInfo" class="form-text text-success d-none mt-2">
-                <i class="fa-solid fa-circle-check me-1"></i> Veículo identificado via QR Code.
+        <!-- Seleção de Veículo + Leitor QR -->
+        <div class="card card-compact bg-white">
+            <div class="row g-1">
+                <div class="col-8">
+                    <select id="selectPlaca" class="form-select form-select-sm">
+                        <option value="">Selecione o Caminhão...</option>
+                    </select>
+                </div>
+                <div class="col-2">
+                    <button class="btn btn-sm btn-outline-secondary w-100" type="button" id="btnAtualizar" title="Atualizar">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
+                <div class="col-2">
+                    <button class="btn btn-sm btn-dark w-100" type="button" data-bs-toggle="modal" data-bs-target="#modalQrCode" onclick="iniciarLeitor()" title="Escanear QR">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Painel de Informação / Status Atual -->
-        <div id="painelStatus" class="card card-custom p-4 mb-3 d-none">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="m-0 text-secondary" id="txtPlacaHead">Caminhão ---</h5>
+        <!-- Painel de Status do Caminhão -->
+        <div id="painelStatus" class="card card-compact bg-white d-none">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong class="text-dark" id="txtPlacaHead">Caminhão ---</strong>
                 <span id="badgeStatus" class="badge bg-secondary badge-status">SEM REGISTRO</span>
             </div>
 
-            <div class="row g-2 mb-3">
+            <div class="row g-2 mb-1">
                 <div class="col-6">
                     <div class="stat-box">
-                        <small class="text-muted d-block">Caixas Embarcadas</small>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">Caixas Embarcadas</small>
                         <span id="txtCaixasSaida" class="stat-number">0</span>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="stat-box">
-                        <small class="text-muted d-block">Motorista Atual</small>
-                        <span id="txtMotoristaAtual" class="fw-bold fs-5 text-dark d-block mt-2">---</span>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">Motorista Atual</small>
+                        <span id="txtMotoristaAtual" class="fw-bold fs-6 text-dark d-block text-truncate mt-1">---</span>
                     </div>
                 </div>
             </div>
 
-            <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> Horário da carga: <span id="txtHoraSaida">---</span></small>
+            <div class="text-end" style="font-size: 0.7rem;">
+                <span class="text-muted"><i class="fa-regular fa-clock me-1"></i>Carga: <span id="txtHoraSaida">---</span></span>
+            </div>
         </div>
 
         <!-- Formulário: Lançamento de Saída -->
-        <div id="cardSaida" class="card card-custom p-4 mb-3 d-none">
-            <h5 class="card-title text-primary mb-3"><i class="fa-solid fa-dolly me-2"></i>Nova Saída (Expedição)</h5>
+        <div id="cardSaida" class="card card-compact bg-white d-none">
+            <div class="fw-bold text-primary mb-2" style="font-size: 0.85rem;">
+                <i class="fa-solid fa-dolly me-1"></i>Nova Saída (Expedição)
+            </div>
             <form id="formSaida">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Nome do Motorista</label>
-                    <input type="text" id="inputMotorista" class="form-control" required placeholder="Ex: João Silva">
+                <div class="row g-2 mb-2">
+                    <div class="col-7">
+                        <input type="text" id="inputMotorista" class="form-control form-control-sm" required placeholder="Nome Motorista">
+                    </div>
+                    <div class="col-5">
+                        <input type="number" id="inputCaixasSaida" class="form-control form-control-sm" min="1" required placeholder="Qtd Caixas">
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Quantidade de Caixas na Carga</label>
-                    <input type="number" id="inputCaixasSaida" class="form-control form-control-lg" min="1" required placeholder="Ex: 10">
-                </div>
-                <button type="submit" class="btn btn-primary w-100 btn-lg fw-bold">
-                    <i class="fa-solid fa-paper-plane me-2"></i>Registrar Saída
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                    <i class="fa-solid fa-paper-plane me-1"></i>Registrar Saída
                 </button>
             </form>
         </div>
 
         <!-- Formulário: Registro de Retorno -->
-        <div id="cardRetorno" class="card card-custom p-4 mb-3 d-none">
-            <h5 class="card-title text-success mb-3"><i class="fa-solid fa-truck-arrow-right me-2"></i>Registrar Retorno (Baixa)</h5>
+        <div id="cardRetorno" class="card card-compact bg-white d-none">
+            <div class="fw-bold text-success mb-2" style="font-size: 0.85rem;">
+                <i class="fa-solid fa-truck-arrow-right me-1"></i>Registrar Retorno (Baixa)
+            </div>
             <form id="formRetorno">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Caixas Retornadas ao Pátio</label>
-                    <input type="number" id="inputCaixasRetorno" class="form-control form-control-lg" min="0" required placeholder="Ex: 10">
+                <div class="mb-2">
+                    <input type="number" id="inputCaixasRetorno" class="form-control form-control-sm" min="0" required placeholder="Caixas Retornadas ao Pátio">
                 </div>
-                <button type="submit" class="btn btn-success w-100 btn-lg fw-bold">
-                    <i class="fa-solid fa-check-double me-2"></i>Concluir e Dar Baixa
+                <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                    <i class="fa-solid fa-check-double me-1"></i>Concluir e Dar Baixa
                 </button>
             </form>
         </div>
 
-        <!-- Histórico Recente do Veículo -->
-        <div class="card card-custom p-3">
-            <h6 class="text-muted fw-bold mb-3"><i class="fa-solid fa-history me-2"></i>Histórico Recente de Viagens</h6>
+        <!-- Histórico Recente (Visão Compacta) -->
+        <div class="card card-compact bg-white flex-grow-1" style="min-height: 120px;">
+            <div class="text-muted fw-bold mb-1" style="font-size: 0.75rem;">
+                <i class="fa-solid fa-history me-1"></i>Últimas 3 Viagens
+            </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                <table class="table table-hover table-compact align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Data</th>
                             <th>Motorista</th>
-                            <th>Saída</th>
+                            <th>Saí.</th>
                             <th>Ret.</th>
                             <th>Dif.</th>
                         </tr>
@@ -137,25 +183,24 @@
 
     <!-- Modal com Câmera para Leitura do QR Code -->
     <div class="modal fade" id="modalQrCode" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fa-solid fa-camera me-2"></i>Apunte para o QR Code</h5>
+                <div class="modal-header p-2">
+                    <h6 class="modal-title m-0"><i class="fa-solid fa-camera me-1"></i>Escanear QR Code</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="pararLeitor()"></button>
                 </div>
-                <div class="modal-body text-center p-3">
+                <div class="modal-body text-center p-2">
                     <div id="reader"></div>
-                    <small class="text-muted mt-2 d-block">Posicione o código no centro do quadrado.</small>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal" onclick="pararLeitor()">Cancelar</button>
+                <div class="modal-footer p-1">
+                    <button type="button" class="btn btn-sm btn-secondary w-100" data-bs-dismiss="modal" onclick="pararLeitor()">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/style/../js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         // CONFIGURAÇÃO DO SUPABASE
@@ -169,7 +214,6 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await carregarCaminhoes();
 
-            // Se veio placa na URL ex: ?placa=IQQ8568
             const urlParams = new URLSearchParams(window.location.search);
             const placaUrl = urlParams.get('placa');
 
@@ -190,7 +234,6 @@
             document.getElementById('formRetorno').addEventListener('submit', registrarRetorno);
         });
 
-        // Seleciona a placa no dropdown e carrega os dados
         function selecionarPlacaNaTela(placa) {
             const select = document.getElementById('selectPlaca');
             select.value = placa.toUpperCase();
@@ -198,31 +241,28 @@
                 document.getElementById('qrInfo').classList.remove('d-none');
                 carregarStatusCaminhao(select.value);
             } else {
-                alert(`A placa ${placa} lida no QR Code não foi encontrada na base de dados.`);
+                alert(`A placa ${placa} não foi encontrada.`);
             }
         }
 
-        // --- FUNÇÕES DO LEITOR DE QR CODE VIA CÂMERA ---
+        // --- LEITOR QR CODE ---
         function iniciarLeitor() {
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
             }
 
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const config = { fps: 10, qrbox: { width: 200, height: 200 } };
 
             html5QrCode.start(
-                { facingMode: "environment" }, // Usa a câmera traseira do celular
+                { facingMode: "environment" },
                 config,
                 (decodedText) => {
-                    // Função executada quando lê o QR Code com sucesso
                     pararLeitor();
                     
-                    // Fecha a modal do leitor
                     const modalEl = document.getElementById('modalQrCode');
                     const modal = bootstrap.Modal.getInstance(modalEl);
                     if (modal) modal.hide();
 
-                    // Extrai a placa se o QR Code contiver uma URL completa ou apenas a placa texto
                     let placaExtraida = decodedText;
                     if (decodedText.includes('placa=')) {
                         const url = new URL(decodedText);
@@ -233,11 +273,9 @@
                         selecionarPlacaNaTela(placaExtraida);
                     }
                 },
-                (errorMessage) => {
-                    // Ignora erros contínuos de busca de QR code no quadro
-                }
+                (errorMessage) => {}
             ).catch(err => {
-                alert("Não foi possível acessar a câmera do dispositivo: " + err);
+                alert("Não foi possível acessar a câmera: " + err);
             });
         }
 
@@ -249,21 +287,21 @@
             }
         }
 
-        // --- CARREGAMENTO DE DADOS ---
+        // --- DADOS ---
         async function carregarCaminhoes() {
             const { data, error } = await db.from('caminhoes').select('placa, modelo').order('placa');
             const select = document.getElementById('selectPlaca');
-            select.innerHTML = '<option value="">-- Selecione a Placa --</option>';
+            select.innerHTML = '<option value="">Selecione o Caminhão...</option>';
 
             if (!error && data) {
                 data.forEach(c => {
-                    select.innerHTML += `<option value="${c.placa}">${c.placa} ${c.modelo ? '(' + c.modelo + ')' : ''}</option>`;
+                    select.innerHTML += `<option value="${c.placa}">${c.placa} ${c.modelo ? '- ' + c.modelo : ''}</option>`;
                 });
             }
         }
 
         async function carregarStatusCaminhao(placa) {
-            document.getElementById('txtPlacaHead').innerText = `Caminhão ${placa}`;
+            document.getElementById('txtPlacaHead').innerText = `Placa: ${placa}`;
             document.getElementById('painelStatus').classList.remove('d-none');
 
             const { data, error } = await db.from('controle_caixas')
@@ -279,13 +317,13 @@
                 document.getElementById('badgeStatus').innerText = 'EM VIAGEM';
                 document.getElementById('txtCaixasSaida').innerText = viagemAtual.caixas_saida;
                 document.getElementById('txtMotoristaAtual').innerText = viagemAtual.motorista;
-                document.getElementById('txtHoraSaida').innerText = new Date(viagemAtual.data_saida).toLocaleString('pt-BR');
+                document.getElementById('txtHoraSaida').innerText = new Date(viagemAtual.data_saida).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
                 document.getElementById('cardSaida').classList.add('d-none');
                 document.getElementById('cardRetorno').classList.remove('d-none');
             } else {
                 document.getElementById('badgeStatus').className = 'badge bg-success badge-status';
-                document.getElementById('badgeStatus').innerText = 'LIVRE / NO PÁTIO';
+                document.getElementById('badgeStatus').innerText = 'LIVRE / PÁTIO';
                 document.getElementById('txtCaixasSaida').innerText = '0';
                 document.getElementById('txtMotoristaAtual').innerText = 'Nenhum';
                 document.getElementById('txtHoraSaida').innerText = 'Sem viagem ativa';
@@ -345,13 +383,13 @@
                 .select('*')
                 .eq('placa', placa)
                 .order('created_at', { ascending: false })
-                .limit(5);
+                .limit(3);
 
             const tbody = document.getElementById('tbodyHistorico');
             tbody.innerHTML = '';
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum histórico encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum histórico.</td></tr>';
                 return;
             }
 
@@ -365,8 +403,8 @@
 
                 tbody.innerHTML += `
                     <tr>
-                        <td>${new Date(row.data_saida).toLocaleDateString('pt-BR')}</td>
-                        <td>${row.motorista}</td>
+                        <td>${new Date(row.data_saida).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</td>
+                        <td class="text-truncate" style="max-width: 80px;">${row.motorista}</td>
                         <td class="fw-bold">${row.caixas_saida}</td>
                         <td>${row.caixas_retorno ?? '-'}</td>
                         <td>${row.status === 'FINALIZADO' ? badgeDif : '<small class="text-warning">Em rota</small>'}</td>
